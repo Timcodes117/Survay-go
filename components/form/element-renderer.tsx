@@ -1,0 +1,411 @@
+import React from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import type { FormField } from '@/lib/types'
+import { useApp } from '@/contexts/app'
+
+interface FormElementRendererProps {
+  element: FormField
+  value?: any
+  onChange?: (value: any) => void
+  disabled?: boolean
+}
+
+const FormElementRenderer: React.FC<FormElementRendererProps> = ({
+  element,
+  value,
+  onChange,
+  disabled = false
+}) => {
+  const { formPages, setFormPages, cursorMode } = useApp()
+  
+  const handleChange = (newValue: any) => {
+    if (onChange) {
+      onChange(newValue)
+    }
+  }
+
+  const handleOptionChange = (optionIndex: number, newValue: string) => {
+    // Only update if element has options (radio, checkbox, select)
+    if (!('options' in element) || !element.options) return
+    
+    const elementWithOptions = element as any // Type assertion for elements with options
+    
+    setFormPages(prevPages => 
+      prevPages.map(page => ({
+        ...page,
+        elements: page.elements.map((el: any) => 
+          el.id === element.id 
+            ? { 
+                ...el, 
+                options: elementWithOptions.options?.map((option: string, index: number) => 
+                  index === optionIndex ? newValue : option
+                )
+              }
+            : el
+        )
+      }))
+    )
+  }
+
+  const renderBasicInput = () => {
+    const commonProps = {
+      disabled,
+      placeholder: element.placeholder,
+      value: value || '',
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value),
+      className: "placeholder:text-muted-foreground",
+      onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
+      onMouseDown: (e: React.MouseEvent) => e.stopPropagation()
+    }
+
+    switch (element.type) {
+      case 'text':
+        return <Input type="text" {...commonProps} />
+      case 'email':
+        return <Input type="email" {...commonProps} />
+      case 'phone':
+        return <Input type="tel" {...commonProps} />
+      case 'number':
+        return (
+          <Input 
+            type="number" 
+            {...commonProps}
+            min={element.min}
+            max={element.max}
+            step={element.step}
+          />
+        )
+      case 'textarea':
+        return (
+          <Textarea
+            disabled={disabled}
+            placeholder={element.placeholder}
+            value={value || ''}
+            className="placeholder:text-muted-foreground"
+            onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+            onMouseDown={(e: React.MouseEvent) => cursorMode !== "pan" && e.stopPropagation()}
+          />
+        )
+      default:
+        return <Input type="text" {...commonProps} />
+    }
+  }
+
+  const renderChoiceInput = () => {
+    switch (element.type) {
+      case 'radio':
+        return (
+          <div className="space-y-2">
+            {(element as any).options?.map((option: string, index: number) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`${element.id}-${index}`}
+                  name={element.id}
+                  value={option}
+                  checked={value === option}
+                  onChange={(e) => handleChange(e.target.value)}
+                  disabled={disabled}
+                  className="h-4 w-4 text-primary"
+                  onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+                  onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+                {!disabled && <Label htmlFor={`${element.id}-${index}`} className="text-sm font-normal">
+                  {option}
+                </Label>}
+                {disabled && <Input 
+                  type="text" 
+                  value={option} 
+                  onChange={(e) => handleOptionChange(index, e.target.value)}
+                  onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+                  onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                />}
+              </div>
+            ))}
+          </div>
+        )
+      
+      case 'checkbox':
+        return (
+          <div className="space-y-2">
+            {(element as any).options?.map((option: string, index: number) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`${element.id}-${index}`}
+                  value={option}
+                  checked={Array.isArray(value) ? value.includes(option) : false}
+                  onChange={(e) => {
+                    const currentValues = Array.isArray(value) ? value : []
+                    if (e.target.checked) {
+                      handleChange([...currentValues, option])
+                    } else {
+                      handleChange(currentValues.filter((v: string) => v !== option))
+                    }
+                  }}
+                  disabled={disabled}
+                  className="h-4 w-4 text-primary"
+                  onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+                  onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+               {!disabled && <Label htmlFor={`${element.id}-${index}`} className="text-sm font-normal">
+                  {option}
+                </Label>}
+               {disabled && <Input 
+                  type="text" 
+                  value={option} 
+                  onChange={(e) => handleOptionChange(index, e.target.value)}
+                  onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+                  onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                />}
+
+              </div>
+            ))}
+          </div>
+        )
+      
+      case 'select':
+        return (
+          <Select
+            value={value || ''}
+            onValueChange={handleChange}
+            disabled={disabled}
+          >
+            <SelectTrigger className="placeholder:text-muted-foreground">
+              <SelectValue placeholder={element.placeholder || 'Select an option'} />
+            </SelectTrigger>
+            <SelectContent>
+              {(element as any).options?.map((option: string, index: number) => (
+                <SelectItem key={index} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  const renderAdvancedInput = () => {
+    switch (element.type) {
+      case 'date':
+        return (
+          <Input
+            type="date"
+            disabled={disabled}
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            className="placeholder:text-muted-foreground"
+            onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+            onMouseDown={(e: React.MouseEvent) => cursorMode !== "pan" && e.stopPropagation()}
+          />
+        )
+      
+      case 'time':
+        return (
+          <Input
+            type="time"
+            disabled={disabled}
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            className="placeholder:text-muted-foreground"
+            onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+            onMouseDown={(e: React.MouseEvent) => cursorMode !== "pan" && e.stopPropagation()}
+          />
+        )
+      
+      case 'url':
+        return (
+          <Input
+            type="url"
+            disabled={disabled}
+            placeholder={element.placeholder}
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            className="placeholder:text-muted-foreground"
+            onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+            onMouseDown={(e: React.MouseEvent) => cursorMode !== "pan" && e.stopPropagation()}
+          />
+        )
+      
+      case 'address':
+        return (
+          <div className="space-y-2">
+            <Textarea
+              disabled={disabled}
+              placeholder={element.placeholder || 'Enter address'}
+              value={value || ''}
+              onChange={(e) => handleChange(e.target.value)}
+              className="placeholder:text-muted-foreground"
+              onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+              onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  const renderFileMediaInput = () => {
+    switch (element.type) {
+      case 'file':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              disabled={disabled}
+              accept={element.accept?.join(',')}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                handleChange(file)
+              }}
+              className="placeholder:text-muted-foreground"
+              onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+              onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+            {element.maxSizeMB && (
+              <p className="text-xs text-muted-foreground">
+                Maximum file size: {element.maxSizeMB}MB
+              </p>
+            )}
+          </div>
+        )
+      
+      case 'image':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              disabled={disabled}
+              accept={element.accept?.join(',') || 'image/*'}
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                handleChange(file)
+              }}
+              className="placeholder:text-muted-foreground"
+              onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+              onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+            {element.maxSizeMB && (
+              <p className="text-xs text-muted-foreground">
+                Maximum file size: {element.maxSizeMB}MB
+              </p>
+            )}
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  const renderLayoutDisplay = () => {
+    switch (element.type) {
+      case 'heading':
+        const HeadingTag = `h${element.level || 2}` as keyof JSX.IntrinsicElements
+        return (
+          <HeadingTag className="text-lg font-semibold">
+            {element.label || 'Untitled Heading'}
+          </HeadingTag>
+        )
+      
+      case 'description':
+        return (
+          <p className="text-sm text-muted-foreground">
+            {element.text || 'No description provided'}
+          </p>
+        )
+      
+      case 'divider':
+        return <hr className="border-t border-muted-foreground/25" />
+      
+      case 'media':
+        return (
+          <div className="space-y-2">
+            {element.mediaType === 'image' && element.url && (
+              <img 
+                src={element.url} 
+                alt={element.label || 'Media'} 
+                className="max-w-full h-auto rounded-lg"
+              />
+            )}
+            {element.mediaType === 'video' && element.url && (
+              <video 
+                src={element.url} 
+                controls 
+                className="max-w-full h-auto rounded-lg"
+              />
+            )}
+          </div>
+        )
+      
+      case 'pageBreak':
+        return (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex-1 border-t border-muted-foreground/25"></div>
+            <span className="px-4 text-xs text-muted-foreground">Page Break</span>
+            <div className="flex-1 border-t border-muted-foreground/25"></div>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  // Determine which renderer to use based on element type
+  const renderElement = () => {
+    // Basic inputs (matching toolbar.tsx)
+    if (['text', 'email', 'phone', 'number', 'textarea'].includes(element.type)) {
+      return renderBasicInput()
+    }
+    
+    // Choice inputs
+    if (['radio', 'checkbox', 'select'].includes(element.type)) {
+      return renderChoiceInput()
+    }
+    
+    // Advanced inputs
+    if (['date', 'time', 'address', 'url'].includes(element.type)) {
+      return renderAdvancedInput()
+    }
+    
+    // File and media inputs (matching toolbar.tsx - signature is commented out)
+    if (['file', 'image'].includes(element.type)) {
+      return renderFileMediaInput()
+    }
+    
+    // Layout and display elements
+    if (['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type)) {
+      return renderLayoutDisplay()
+    }
+    
+    // Fallback
+    return <Input type="text" disabled placeholder="Unknown element type" />
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* {element.label && !['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type) && (
+        <Label className="text-sm font-medium">
+          {element.label}
+          {element.required && <span className="text-destructive ml-1">*</span>}
+        </Label>
+      )} */}
+      {renderElement()}
+      {element.helpText && (
+        <p className="text-xs text-muted-foreground">{element.helpText}</p>
+      )}
+    </div>
+  )
+}
+
+export default FormElementRenderer
