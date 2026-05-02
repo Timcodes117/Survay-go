@@ -66,11 +66,11 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
               <ThemeToggleButtons />
             </div>
           </header>
-          <div className="flex max-h-[91.5vh]  flex-row w-full  !p-0 ">
-            <div className="flex min-w-0 flex-1 flex-col gap-4 pt-0">
+          <div className="flex min-h-0 flex-1 flex-row w-full !p-0 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">
               {children}
             </div>
-            <div className="flex min-h-0 w-[350px] min-w-[350px] border-l">
+            <div className="flex min-h-0 w-[350px] min-w-[350px] border-l overflow-hidden">
               <ChatPanel />
             </div>
           </div>
