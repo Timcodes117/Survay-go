@@ -25,10 +25,10 @@ import { AppProvider } from "@/contexts/app";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <AppProvider>
         <AppSidebar />
-        <SidebarInset className="flex flex-col min-h-0 overflow-hidden">
+        <SidebarInset className="flex h-full min-h-0 flex-col overflow-hidden">
           <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -67,7 +67,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <div className="flex min-h-0 flex-1 flex-row w-full !p-0 overflow-hidden">
-            <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">
               {children}
             </div>
             <div className="flex min-h-0 w-[350px] min-w-[350px] border-l overflow-hidden">

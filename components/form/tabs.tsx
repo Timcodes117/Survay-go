@@ -1,5 +1,6 @@
 "use client"
 import React from 'react'
+import Link from 'next/link'
 import { Button } from '../ui/button'
 import { Cog, Users, Edit2 } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -17,13 +18,16 @@ function Tabs() {
   const activeTab = tabDefs.find((tab) => pathname.endsWith(`/${tab.segment}`))?.key ?? 'editor'
   const basePath = pathname.replace(/\/(editor|responses|settings)\/?$/, '')
 
-  const setTab = (key: string) => {
-    router.push(`${basePath}/${key}`, { scroll: false })
-  }
+  React.useEffect(() => {
+    for (const tab of tabDefs) {
+      if (tab.key === activeTab) continue
+      router.prefetch(`${basePath}/${tab.segment}`)
+    }
+  }, [activeTab, basePath, router])
 
   return (
     <div className='w-full h-fit flex gap-2  items-center justify-center'>
-      {tabDefs.map(({ key, label, Icon }) => (
+      {tabDefs.map(({ key, label, Icon, segment }) => (
         <div key={key} className='relative'>
           <AnimatePresence initial={false}>
             {activeTab === key && (
@@ -35,27 +39,29 @@ function Tabs() {
             )}
           </AnimatePresence>
           <Button
+            asChild
             variant={'secondary'}
             className={`text-sm  !font-normal !bg-transparent relative px-4 ${activeTab === key ? 'text-primary' : 'text-muted-foreground'}`}
-            onClick={() => setTab(key)}
           >
-            <span className='relative z-10 flex items-center gap-1'>
-              <Icon />
-              <AnimatePresence initial={false}>
-                {activeTab === key && (
-                  <motion.span
-                    key='label'
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 'auto', opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className='overflow-hidden'
-                  >
-                    {label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </span>
+            <Link href={`${basePath}/${segment}`} scroll={false} prefetch>
+              <span className='relative z-10 flex items-center gap-1'>
+                <Icon />
+                <AnimatePresence initial={false}>
+                  {activeTab === key && (
+                    <motion.span
+                      key='label'
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 'auto', opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.15, ease: 'easeOut' }}
+                      className='overflow-hidden'
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </span>
+            </Link>
           </Button>
         </div>
       ))}
