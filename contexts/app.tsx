@@ -1,6 +1,6 @@
 import React from "react"
 import { create } from "zustand"
-import type { FormPage } from "@/lib/types"
+import { validateAndNormalizeForm, type FormPage, type ValidationIssue } from "@/lib/types"
 
 interface AppState {
     zoom: number
@@ -9,6 +9,8 @@ interface AppState {
     formPages: FormPage[]
     currentPageId?: string | null
     cursorMode: 'pan' | 'select'
+    validationErrors: ValidationIssue[]
+    validationWarnings: ValidationIssue[]
 }
 
 interface AppActions {
@@ -18,6 +20,7 @@ interface AppActions {
     setFormPages: (updater: React.SetStateAction<FormPage[]>) => void
     setCurrentPageId: (pageId: string | null) => void
     setCursorMode: (mode: 'pan' | 'select') => void
+    clearValidationIssues: () => void
 }
 
 type AppStore = AppState & AppActions
@@ -255,21 +258,36 @@ const initialPages: FormPage[] = [
     }
 ]
 
+const validatedInitial = validateAndNormalizeForm(initialPages)
+const initialFormPages = validatedInitial.value
+
 export const useApp = create<AppStore>()((set) => ({
     zoom: 1.0,
     positionX: 0,
     positionY: 0,
-    formPages: initialPages,
-    currentPageId: initialPages[0]?.id ?? null,
+    formPages: initialFormPages,
+    currentPageId: initialFormPages[0]?.id ?? null,
     cursorMode: 'select',
+    validationErrors: validatedInitial.errors,
+    validationWarnings: validatedInitial.warnings,
     setZoom: (zoom) => set({ zoom }),
     setPosition: (x, y) => set({ positionX: x, positionY: y }),
     resetZoom: () => set({ zoom: 1.0, positionX: 0, positionY: 0 }),
-    setFormPages: (updater) => set((state) => ({
-        formPages: typeof updater === "function" ? (updater as (prev: FormPage[]) => FormPage[])(state.formPages) : updater
-    })),
+    setFormPages: (updater) => set((state) => {
+        const nextCandidate =
+            typeof updater === "function"
+                ? (updater as (prev: FormPage[]) => FormPage[])(state.formPages)
+                : updater
+        const result = validateAndNormalizeForm(nextCandidate)
+        return {
+            formPages: result.ok ? result.value : state.formPages,
+            validationErrors: result.errors,
+            validationWarnings: result.warnings,
+        }
+    }),
     setCurrentPageId: (pageId) => set({ currentPageId: pageId }),
-    setCursorMode: (mode) => set({ cursorMode: mode })
+    setCursorMode: (mode) => set({ cursorMode: mode }),
+    clearValidationIssues: () => set({ validationErrors: [], validationWarnings: [] })
 }))
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {

@@ -8,8 +8,8 @@ import { useApp } from '@/contexts/app'
 
 interface FormElementRendererProps {
   element: FormField
-  value?: any
-  onChange?: (value: any) => void
+  value?: unknown
+  onChange?: (value: unknown) => void
   disabled?: boolean
 }
 
@@ -21,7 +21,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
 }) => {
   const { formPages, setFormPages, cursorMode } = useApp()
   
-  const handleChange = (newValue: any) => {
+  const handleChange = (newValue: unknown) => {
     if (onChange) {
       onChange(newValue)
     }
@@ -51,10 +51,12 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
   }
 
   const renderBasicInput = () => {
+    const normalizedBasicValue =
+      typeof value === "string" || typeof value === "number" ? value : ""
     const commonProps = {
       disabled,
       placeholder: element.placeholder,
-      value: value || '',
+      value: normalizedBasicValue,
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleChange(e.target.value),
       className: "placeholder:text-muted-foreground",
       onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
@@ -66,6 +68,8 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
         return <Input type="text" {...commonProps} />
       case 'email':
         return <Input type="email" {...commonProps} />
+      case 'password':
+        return <Input type="password" {...commonProps} />
       case 'phone':
         return <Input type="tel" {...commonProps} />
       case 'number':
@@ -83,8 +87,9 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
           <Textarea
             disabled={disabled}
             placeholder={element.placeholder}
-            value={value || ''}
+            value={typeof value === "string" ? value : ""}
             className="placeholder:text-muted-foreground"
+            onChange={(e) => handleChange(e.target.value)}
             onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
             onMouseDown={(e: React.MouseEvent) => cursorMode !== "pan" && e.stopPropagation()}
           />
@@ -170,7 +175,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
       case 'select':
         return (
           <Select
-            value={value || ''}
+            value={typeof value === "string" ? value : ""}
             onValueChange={handleChange}
             disabled={disabled}
           >
@@ -199,7 +204,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
           <Input
             type="date"
             disabled={disabled}
-            value={value || ''}
+            value={typeof value === "string" ? value : ""}
             onChange={(e) => handleChange(e.target.value)}
             className="placeholder:text-muted-foreground"
             onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
@@ -212,7 +217,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
           <Input
             type="time"
             disabled={disabled}
-            value={value || ''}
+            value={typeof value === "string" ? value : ""}
             onChange={(e) => handleChange(e.target.value)}
             className="placeholder:text-muted-foreground"
             onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
@@ -226,7 +231,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
             type="url"
             disabled={disabled}
             placeholder={element.placeholder}
-            value={value || ''}
+            value={typeof value === "string" ? value : ""}
             onChange={(e) => handleChange(e.target.value)}
             className="placeholder:text-muted-foreground"
             onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
@@ -240,7 +245,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
             <Textarea
               disabled={disabled}
               placeholder={element.placeholder || 'Enter address'}
-              value={value || ''}
+              value={typeof value === "string" ? value : ""}
               onChange={(e) => handleChange(e.target.value)}
               className="placeholder:text-muted-foreground"
               onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
@@ -301,6 +306,23 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
             )}
           </div>
         )
+      case 'signature':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="file"
+              disabled={disabled}
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                handleChange(file)
+              }}
+              className="placeholder:text-muted-foreground"
+              onPointerDown={(e: React.PointerEvent) => cursorMode !== "pan" && e.stopPropagation()}
+              onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            />
+          </div>
+        )
       
       default:
         return null
@@ -309,13 +331,15 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
 
   const renderLayoutDisplay = () => {
     switch (element.type) {
-      case 'heading':
-        const HeadingTag = `h${element.level || 2}` as keyof JSX.IntrinsicElements
+      case 'heading': {
+        const level = element.level && element.level >= 1 && element.level <= 6 ? element.level : 2
+        const HeadingTag = `h${level}` as React.ElementType
         return (
           <HeadingTag className="text-lg font-semibold">
             {element.label || 'Untitled Heading'}
           </HeadingTag>
         )
+      }
       
       case 'description':
         return (
@@ -363,33 +387,36 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
 
   // Determine which renderer to use based on element type
   const renderElement = () => {
-    // Basic inputs (matching toolbar.tsx)
-    if (['text', 'email', 'phone', 'number', 'textarea'].includes(element.type)) {
-      return renderBasicInput()
+    switch (element.type) {
+      case "text":
+      case "email":
+      case "password":
+      case "phone":
+      case "number":
+      case "textarea":
+        return renderBasicInput()
+      case "radio":
+      case "checkbox":
+      case "select":
+        return renderChoiceInput()
+      case "date":
+      case "time":
+      case "address":
+      case "url":
+        return renderAdvancedInput()
+      case "file":
+      case "image":
+      case "signature":
+        return renderFileMediaInput()
+      case "heading":
+      case "description":
+      case "divider":
+      case "media":
+      case "pageBreak":
+        return renderLayoutDisplay()
+      default:
+        return <Input type="text" disabled placeholder="Unknown element type" />
     }
-    
-    // Choice inputs
-    if (['radio', 'checkbox', 'select'].includes(element.type)) {
-      return renderChoiceInput()
-    }
-    
-    // Advanced inputs
-    if (['date', 'time', 'address', 'url'].includes(element.type)) {
-      return renderAdvancedInput()
-    }
-    
-    // File and media inputs (matching toolbar.tsx - signature is commented out)
-    if (['file', 'image'].includes(element.type)) {
-      return renderFileMediaInput()
-    }
-    
-    // Layout and display elements
-    if (['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type)) {
-      return renderLayoutDisplay()
-    }
-    
-    // Fallback
-    return <Input type="text" disabled placeholder="Unknown element type" />
   }
 
   return (

@@ -2,25 +2,23 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Cog, Users, Edit2 } from 'lucide-react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 
 const tabDefs = [
-  { key: 'editor', label: 'Editor', Icon: Edit2 },
-  { key: 'responses', label: 'Responses', Icon: Users },
-  { key: 'settings', label: 'Settings', Icon: Cog },
+  { key: 'editor', label: 'Editor', Icon: Edit2, segment: 'editor' },
+  { key: 'responses', label: 'Responses', Icon: Users, segment: 'responses' },
+  { key: 'settings', label: 'Settings', Icon: Cog, segment: 'settings' },
 ]
 
 function Tabs() {
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const active = searchParams.get('tab') ?? 'editor'
+  const activeTab = tabDefs.find((tab) => pathname.endsWith(`/${tab.segment}`))?.key ?? 'editor'
+  const basePath = pathname.replace(/\/(editor|responses|settings)\/?$/, '')
 
   const setTab = (key: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', key)
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    router.push(`${basePath}/${key}`, { scroll: false })
   }
 
   return (
@@ -28,7 +26,7 @@ function Tabs() {
       {tabDefs.map(({ key, label, Icon }) => (
         <div key={key} className='relative'>
           <AnimatePresence initial={false}>
-            {active === key && (
+            {activeTab === key && (
               <motion.div
                 layoutId='active-tab-bg'
                 className='absolute inset-0 rounded-md bg-secondary/80'
@@ -38,13 +36,13 @@ function Tabs() {
           </AnimatePresence>
           <Button
             variant={'secondary'}
-            className={`text-sm  !font-normal !bg-transparent relative px-4 ${active === key ? 'text-primary' : 'text-muted-foreground'}`}
+            className={`text-sm  !font-normal !bg-transparent relative px-4 ${activeTab === key ? 'text-primary' : 'text-muted-foreground'}`}
             onClick={() => setTab(key)}
           >
             <span className='relative z-10 flex items-center gap-1'>
               <Icon />
               <AnimatePresence initial={false}>
-                {active === key && (
+                {activeTab === key && (
                   <motion.span
                     key='label'
                     initial={{ width: 0, opacity: 0 }}

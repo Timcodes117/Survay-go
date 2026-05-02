@@ -17,7 +17,7 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
   // If no element is provided, render children (fallback for existing usage)
   if (!element) {
     return (
-      <div className="w-full h-fit rounded-lg border border-dotted p-6 flex flex-col">
+      <div data-focusable-element="true" className="w-full h-fit rounded-lg border border-dotted p-6 flex flex-col">
         <EditableWrapper>
           <b className='text-md' contentEditable={true} 
           onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
@@ -34,7 +34,7 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
   // For layout/display elements, render them directly without container styling
   if (['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type)) {
     return (
-      <div className="w-full h-fit">
+      <div data-focusable-element="true" className="w-full h-fit">
         <FormElementRenderer element={element} disabled />
       </div>
     )
@@ -42,7 +42,7 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
 
   // For form elements, render with container styling
   return (
-    <div className="w-full h-fit rounded-lg border border-dotted p-6 flex flex-col">
+    <div data-focusable-element="true" className="w-full h-fit rounded-lg border border-dotted p-6 flex flex-col">
       <EditableWrapper>
           {/* {element.required && <span className="text-destructive ml-1">*</span>} */}
         <b className='text-md'>{element.title} {element.required && <span className="text-destructive ml-1">*</span>}</b>

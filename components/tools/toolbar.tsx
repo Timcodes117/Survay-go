@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { IconCirclePlus2, IconPencilCog, IconPlus, IconSparkles, IconTools } from "@tabler/icons-react";
-import { ChevronsUpDown, Grab, MessageCircle, MouseIcon, MousePointer, MousePointer2, Search, Sparkle, Hand } from "lucide-react";
+import { ChevronsUpDown, Grab, MessageCircle, MouseIcon, MousePointer, MousePointer2, Search, Sparkle, Hand, HandIcon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -86,7 +86,7 @@ const FloatingToolBar = () => {
     return (
         <div className="flex items-center justify-center absolute bottom-10 px-1 left-1/2 -translate-x-1/2 bg-background text-foreground w-fit h-[50px] rounded-xl shadow-md border-[0.5px] z-50">
             <div className="flex items-center justify-center gap-2">
-                <DropdownMenu>
+                {/* <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button 
                             variant={"secondary"} 
@@ -116,7 +116,25 @@ const FloatingToolBar = () => {
                             ))}
                         </div>
                     </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu> */}
+                <Button onClick={() => setCursorMode('select')}
+                            variant={ cursorMode !== 'select' ? null : "secondary"} 
+                            size={"icon"} 
+                            color="white"
+                            className="w-[50px] h-[40px]"
+                            aria-label="Cursor mode"
+                        >
+                            <MousePointer2 className="!size-5" />
+                        </Button>
+                <Button onClick={() => setCursorMode('pan')}
+                            variant={ cursorMode !== 'pan' ? null : "secondary"} 
+                            size={"icon"} 
+                            className="w-[50px] h-[40px]"
+                            color="white"
+                            aria-label="Cursor mode"
+                        >
+                            <HandIcon className="!size-5" />
+                        </Button>
                 {/* <Button variant={"ghost"} size={"icon"} className="w-[50px] h-[40px]">
                     <Mous className="!size-5" />
                 </Button> */}
