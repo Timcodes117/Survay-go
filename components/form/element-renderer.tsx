@@ -347,6 +347,18 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
             {element.text || 'No description provided'}
           </p>
         )
+
+      case 'headingDescriptionGroup':
+        return (
+          <div style={{ display: "flex", flexDirection: "column", rowGap: `${Math.max(0, element.gapY ?? 8)}px` }}>
+            <h2 className="text-lg font-semibold">
+              {element.heading || element.label || "Untitled Heading"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {element.text || "No description provided"}
+            </p>
+          </div>
+        )
       
       case 'divider':
         return <hr className="border-t border-muted-foreground/25" />
@@ -410,6 +422,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
         return renderFileMediaInput()
       case "heading":
       case "description":
+      case "headingDescriptionGroup":
       case "divider":
       case "media":
       case "pageBreak":
@@ -421,7 +434,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* {element.label && !['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type) && (
+      {/* {element.label && !['heading', 'description', 'headingDescriptionGroup', 'divider', 'media', 'pageBreak'].includes(element.type) && (
         <Label className="text-sm font-medium">
           {element.label}
           {element.required && <span className="text-destructive ml-1">*</span>}

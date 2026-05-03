@@ -10,6 +10,13 @@ export interface DescriptionField extends BaseField {
   text: string
 }
 
+export interface HeadingDescriptionGroupField extends BaseField {
+  type: "headingDescriptionGroup"
+  heading: string
+  text: string
+  gapY?: number
+}
+
 export interface DividerField extends BaseField {
   type: "divider"
 }

@@ -14,6 +14,7 @@ import {
 import type React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import ChatPanel from "@/components/chat/panel";
+import PropertiesPanel from "@/components/inspector/properties-panel";
 import { ThemeToggle, ThemeToggleButtons } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppProvider } from "@/contexts/app";
+import { AppProvider, useApp } from "@/contexts/app";
+
+function RightRail() {
+  const { rightPanelTab } = useApp();
+
+  return (
+    <div className="flex min-h-0 w-[350px] min-w-[350px] border-l overflow-hidden">
+      <div className="min-h-0 h-full w-full overflow-hidden">
+        {rightPanelTab === "properties" ? <PropertiesPanel /> : <ChatPanel />}
+      </div>
+    </div>
+  );
+}
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -70,9 +83,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">
               {children}
             </div>
-            <div className="flex min-h-0 w-[350px] min-w-[350px] border-l overflow-hidden">
-              <ChatPanel />
-            </div>
+            <RightRail />
           </div>
         </SidebarInset>
       </AppProvider>

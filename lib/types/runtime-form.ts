@@ -31,6 +31,7 @@ const FIELD_TYPES = new Set([
   "signature",
   "heading",
   "description",
+  "headingDescriptionGroup",
   "divider",
   "media",
   "pageBreak",
@@ -174,6 +175,14 @@ const normalizeField = (
         ...base,
         type,
         text: toStringWithDefault(fieldRecord.text, ""),
+      }
+    case "headingDescriptionGroup":
+      return {
+        ...base,
+        type,
+        heading: toStringWithDefault(fieldRecord.heading, base.label ?? base.title),
+        text: toStringWithDefault(fieldRecord.text, ""),
+        gapY: toNumberOrUndefined(fieldRecord.gapY) ?? 8,
       }
     case "divider":
     case "pageBreak":

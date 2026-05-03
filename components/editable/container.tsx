@@ -7,13 +7,22 @@ import { Input } from '../ui/input';
 import { useApp } from '@/contexts/app';
 
 interface EditableElementContainerProps {
+  pageId: string;
   element?: FormField;
   children?: React.ReactNode;
   onChange?: (value: any) => void;
 }
 
-const EditableElementContainer = ({ element, children, onChange }: EditableElementContainerProps) => {
-  const { formPages, setFormPages } = useApp()
+const EditableElementContainer = ({ pageId, element, children, onChange }: EditableElementContainerProps) => {
+  const { selectedElementId, setSelectedElementId, setRightPanelTab, updateElementById } = useApp()
+  const isSelected = element ? selectedElementId === element.id : false
+
+  const handleSelect = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!element) return
+    e.stopPropagation()
+    setSelectedElementId(element.id)
+    setRightPanelTab("properties")
+  }
   // If no element is provided, render children (fallback for existing usage)
   if (!element) {
     return (
@@ -32,9 +41,14 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
   }
 
   // For layout/display elements, render them directly without container styling
-  if (['heading', 'description', 'divider', 'media', 'pageBreak'].includes(element.type)) {
+  if (['heading', 'description', 'headingDescriptionGroup', 'divider', 'media', 'pageBreak'].includes(element.type)) {
     return (
-      <div data-focusable-element="true" className="w-full h-fit">
+      <div
+        data-focusable-element="true"
+        data-element-id={element.id}
+        onClick={handleSelect}
+        className={`w-full h-fit rounded-md transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
+      >
         <FormElementRenderer element={element} disabled />
       </div>
     )
@@ -42,7 +56,12 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
 
   // For form elements, render with container styling
   return (
-    <div data-focusable-element="true" className="w-full h-fit rounded-lg border border-dotted p-6 flex flex-col">
+    <div
+      data-focusable-element="true"
+      data-element-id={element.id}
+      onClick={handleSelect}
+      className={`w-full h-fit rounded-lg border border-dotted p-6 flex flex-col transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
+    >
       <EditableWrapper>
           {/* {element.required && <span className="text-destructive ml-1">*</span>} */}
         <b className='text-md'>{element.title} {element.required && <span className="text-destructive ml-1">*</span>}</b>
@@ -61,16 +80,10 @@ const EditableElementContainer = ({ element, children, onChange }: EditableEleme
          checked={element.required || false} 
          id={`required-checkbox-${element.id}`}
          onChange={(e) => {
-           setFormPages(prevPages => 
-             prevPages.map(page => ({
-               ...page,
-               elements: page.elements.map(el => 
-                 el.id === element.id 
-                   ? { ...el, required: e.target.checked }
-                   : el
-               )
-             }))
-           )
+           updateElementById(pageId, element.id, (currentElement) => ({
+             ...currentElement,
+             required: e.target.checked,
+           }))
          }}
          onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
          onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}

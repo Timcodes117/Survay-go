@@ -13,58 +13,13 @@ import {
 } from "../ui/dropdown-menu";
 import { ScrollArea } from "../ui/scroll-area";
 import { useApp } from "@/contexts/app";
-
-const ELEMENT_GROUPS: { label: string; items: { label: string; value: string }[] }[] = [
-    {
-        label: "Layout & Display",
-        items: [
-            { label: "Heading", value: "heading" },
-            { label: "Description", value: "description" },
-            { label: "Divider", value: "divider" },
-            { label: "Media", value: "media" },
-            { label: "Page Break", value: "pageBreak" },
-        ],
-    },
-    {
-        label: "Basic Inputs",
-        items: [
-            { label: "Text", value: "text" },
-            { label: "Textarea", value: "textarea" },
-            { label: "Number", value: "number" },
-            { label: "Email", value: "email" },
-            // { label: "Password", value: "password" },
-            { label: "Phone", value: "phone" },
-        ],
-    },
-    {
-        label: "Choices",
-        items: [
-            { label: "Radio", value: "radio" },
-            { label: "Checkbox", value: "checkbox" },
-            { label: "Select", value: "select" },
-        ],
-    },
-    {
-        label: "File & Media",
-        items: [
-            { label: "File Upload", value: "file" },
-            { label: "Image Upload", value: "image" },
-            // { label: "Signature", value: "signature" },
-        ],
-    },
-    {
-        label: "Advanced",
-        items: [
-            { label: "Date Picker", value: "date" },
-            { label: "Time Picker", value: "time" },
-            { label: "Address", value: "address" },
-            { label: "URL", value: "url" },
-        ],
-    },
-];
+import { useFormBuilderActions } from "@/hooks/use-form-builder-actions";
+import { ELEMENT_GROUPS } from "@/lib/form/element-groups";
+import { ELEMENT_ICON_BY_TYPE } from "@/lib/form/element-icons";
 
 const FloatingToolBar = () => {
     const { cursorMode, setCursorMode } = useApp();
+    const { addElementToCurrentPage } = useFormBuilderActions();
 
     const cursorModeOptions = [
         {
@@ -151,7 +106,14 @@ const FloatingToolBar = () => {
                                 <DropdownMenuGroup>
                                     <DropdownMenuLabel className="text-xs text-muted-foreground">{group.label}</DropdownMenuLabel>
                                     {group.items.map((item) => (
-                                        <DropdownMenuItem key={item.value} className="cursor-pointer">
+                                        <DropdownMenuItem
+                                            key={item.value}
+                                            className="cursor-pointer"
+                                            onClick={() => addElementToCurrentPage(item.value)}
+                                        >
+                                            <span className="mr-2 inline-flex items-center text-muted-foreground">
+                                              {React.createElement(ELEMENT_ICON_BY_TYPE[item.value], { size: 14 })}
+                                            </span>
                                             {item.label}
                                         </DropdownMenuItem>
                                     ))}

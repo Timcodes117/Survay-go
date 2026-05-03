@@ -216,7 +216,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarHeader>
           <ScrollArea className="flex flex-1 h-[500px] pr-2 w-full overflow-x-hidden">
-        <SidebarContent>
+        <SidebarContent className="overflow-visible">
           <NavMain
             items={data.navMain}
             onItemSelect={(item) => {

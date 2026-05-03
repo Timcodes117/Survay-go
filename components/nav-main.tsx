@@ -17,9 +17,19 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { IconTrash } from "@tabler/icons-react";
-import { ChevronRight, GripVertical, Plus } from "lucide-react";
+import { ChevronRight, GripVertical, Plus, Shapes } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -31,7 +41,11 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { useApp } from "@/contexts/app";
+import { useFormBuilderActions } from "@/hooks/use-form-builder-actions";
 import { useNavMainState } from "@/hooks/use-nav-main-state";
+import { ELEMENT_GROUPS } from "@/lib/form/element-groups";
+import { ELEMENT_ICON_BY_TYPE } from "@/lib/form/element-icons";
+import type { AddableFieldType } from "@/lib/form/factories";
 import type { FormField, FormPage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -43,12 +57,14 @@ function InlineEditableText({
   className,
   displayClassName,
   onCommit,
+  onFocusTarget,
 }: {
   value: string;
   fallbackValue: string;
   className?: string;
   displayClassName?: string;
   onCommit: (nextValue: string) => void;
+  onFocusTarget?: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -78,10 +94,14 @@ function InlineEditableText({
       // biome-ignore lint/a11y/useKeyWithClickEvents: double click starts inline edit in this controlled sidebar row.
       // biome-ignore lint/a11y/noStaticElementInteractions: this element intentionally triggers inline edit mode.
       <span
-        className={displayClassName ?? "block max-w-full truncate"}
-        onClick={(e) => e.stopPropagation()}
+        className={displayClassName ?? "block max-w-full truncate "}
+        onClick={(e) => {
+          e.stopPropagation();
+          onFocusTarget?.();
+        }}
         onDoubleClick={(e) => {
           e.stopPropagation();
+          onFocusTarget?.();
           setIsEditing(true);
         }}
       >
@@ -95,7 +115,10 @@ function InlineEditableText({
       ref={inputRef}
       className={className}
       value={draft}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onFocusTarget?.();
+      }}
       onDoubleClick={(e) => e.stopPropagation()}
       onChange={(e) => setDraft(e.target.value)}
       onKeyDown={(e) => {
@@ -120,6 +143,8 @@ function SortablePageItem({
   isOpen,
   onToggleOpen,
   onAliasChange,
+  onAddElement,
+  onDeletePage,
   showDelete,
   children,
 }: {
@@ -128,6 +153,8 @@ function SortablePageItem({
   isOpen: boolean;
   onToggleOpen: () => void;
   onAliasChange: (nextAlias: string) => void;
+  onAddElement: (type: AddableFieldType) => void;
+  onDeletePage: () => void;
   showDelete: boolean;
   children?: React.ReactNode;
 }) {
@@ -197,18 +224,53 @@ function SortablePageItem({
             onCommit={onAliasChange}
           />
         </SidebarMenuButton>
-        <Button
-          variant={"ghost"}
-          size={"icon"}
-          className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
-        >
-          <Plus size={16} />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={"ghost"}
+              size={"icon"}
+              className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Plus size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" className="min-w-[280px] p-2">
+            <ScrollArea className="h-[260px]">
+              {ELEMENT_GROUPS.map((group, idx) => (
+                <React.Fragment key={group.label}>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">
+                      {group.label}
+                    </DropdownMenuLabel>
+                    {group.items.map((item) => (
+                      <DropdownMenuItem
+                        key={item.value}
+                        className="cursor-pointer"
+                        onClick={() => onAddElement(item.value)}
+                      >
+                        <span className="mr-2 inline-flex items-center text-muted-foreground">
+                          {React.createElement(ELEMENT_ICON_BY_TYPE[item.value], { size: 14 })}
+                        </span>
+                        {item.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                  {idx < ELEMENT_GROUPS.length - 1 && <DropdownMenuSeparator />}
+                </React.Fragment>
+              ))}
+            </ScrollArea>
+          </DropdownMenuContent>
+        </DropdownMenu>
         {showDelete && (
           <Button
             variant={"ghost"}
             size={"icon"}
             className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeletePage();
+            }}
           >
             <IconTrash size={16} />
           </Button>
@@ -222,11 +284,19 @@ function SortablePageItem({
 function SortableElementItem({
   pageId,
   element,
+  displayAlias,
+  isSelected,
+  onSelect,
   onAliasChange,
+  onDelete,
 }: {
   pageId: string;
   element: FormField;
+  displayAlias: string;
+  isSelected: boolean;
+  onSelect: () => void;
   onAliasChange: (nextAlias: string) => void;
+  onDelete: () => void;
 }) {
   const { active, over } = useDndContext();
   const {
@@ -253,12 +323,14 @@ function SortableElementItem({
 
   return (
     <SidebarMenuSubItem
+      data-sidebar-element-id={element.id}
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "relative w-full min-w-0 rounded-md",
         isDragging && "opacity-50",
         isDropTarget && isElementDrag && "bg-primary/10",
+        isSelected && "bg-primary/10 ring-1 ring-primary/40",
       )}
     >
       {isDropTarget && isElementDrag && !isOverMidpoint && (
@@ -279,20 +351,32 @@ function SortableElementItem({
         >
           <GripVertical size={12} />
         </button>
-        <SidebarMenuSubButton className="!px-0 min-w-0 pr-1">
-          <InlineEditableText
-            className="w-full max-w-full truncate text-xs px-2 border-none !bg-transparent !ring-0 focus:!bg-muted-foreground/5 rounded-xl"
-            displayClassName="block w-full truncate text-xs px-2 rounded-xl"
-            value={`${element.alias} ` || "Untitled Field"}
-            fallbackValue="Untitled Field"
-            onCommit={onAliasChange}
-          />
+        <SidebarMenuSubButton className="!px-0 min-w-0 pr-1" onClick={onSelect}>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="text-muted-foreground">
+              {"type" in element && element.type in ELEMENT_ICON_BY_TYPE
+                ? React.createElement(
+                    ELEMENT_ICON_BY_TYPE[element.type as keyof typeof ELEMENT_ICON_BY_TYPE],
+                    { size: 12 },
+                  )
+                : <Shapes size={12} />}
+            </span>
+            <InlineEditableText
+              className="w-full max-w-full truncate text-xs px-2 border-none !bg-transparent !ring-0 focus:!bg-muted-foreground/5 rounded-xl"
+              displayClassName="block w-full truncate text-xs px-2 rounded-xl cursor-default"
+              value={displayAlias}
+              fallbackValue="Untitled Field"
+            onFocusTarget={onSelect}
+              onCommit={onAliasChange}
+            />
+          </div>
         </SidebarMenuSubButton>
         <div className="flex w-9 shrink-0 justify-end">
           <Button
             variant={"ghost"}
             size={"icon"}
             className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity"
+            onClick={onDelete}
           >
             <IconTrash size={16} />
           </Button>
@@ -314,7 +398,16 @@ export function NavMain({
   }[];
   onItemSelect?: (item: { title: string; url: string }) => boolean | undefined;
 }) {
-  const { formPages, setFormPages } = useApp();
+  const {
+    formPages,
+    setFormPages,
+    selectedElementId,
+    setSelectedElementId,
+    setRightPanelTab,
+    setCurrentPageId,
+  } = useApp();
+  const { addPage, removePage, addElementToPage, removeElementFromPage } =
+    useFormBuilderActions();
   const {
     sortedPages,
     openPages,
@@ -332,6 +425,52 @@ export function NavMain({
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  const getElementDisplayAliases = (elements: FormField[]) => {
+    const counts = new Map<string, number>();
+    const totalByAlias = new Map<string, number>();
+
+    for (const element of elements) {
+      const baseAlias = (element.alias || "Untitled Field").trim() || "Untitled Field";
+      totalByAlias.set(baseAlias, (totalByAlias.get(baseAlias) ?? 0) + 1);
+    }
+
+    const displayById = new Map<string, string>();
+    for (const element of elements) {
+      const baseAlias = (element.alias || "Untitled Field").trim() || "Untitled Field";
+      const nextIndex = (counts.get(baseAlias) ?? 0) + 1;
+      counts.set(baseAlias, nextIndex);
+      const hasDuplicates = (totalByAlias.get(baseAlias) ?? 0) > 1;
+      displayById.set(
+        element.id,
+        hasDuplicates ? `${baseAlias} (${nextIndex})` : baseAlias,
+      );
+    }
+
+    return displayById;
+  };
+
+  useEffect(() => {
+    if (!selectedElementId) return;
+
+    const ownerPage = sortedPages.find((page) =>
+      page.elements.some((element) => element.id === selectedElementId),
+    );
+    if (!ownerPage) return;
+
+    if (!openPages[ownerPage.id]) {
+      togglePage(ownerPage.id);
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const target = document.querySelector(
+        `[data-sidebar-element-id="${selectedElementId}"]`,
+      ) as HTMLElement | null;
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }, [selectedElementId, sortedPages, openPages, togglePage]);
 
   return (
     <SidebarGroup>
@@ -359,9 +498,14 @@ export function NavMain({
         ))}
         {sortedPages.length > 0 && (
           <>
-            <div className="flex items-center justify-between pr-2 min-w-0">
+            <div className="sticky top-0 z-10 flex min-w-0 items-center justify-between pr-2 bg-background">
               <SidebarGroupLabel>Pages</SidebarGroupLabel>
-              <Button variant={"ghost"} size={"icon"} className="shrink-0">
+              <Button
+                variant={"ghost"}
+                size={"icon"}
+                className="shrink-0"
+                onClick={addPage}
+              >
                 <Plus size={16} />
               </Button>
             </div>
@@ -378,6 +522,7 @@ export function NavMain({
                   const sortedElements = [...page.elements].sort(
                     (a, b) => a.order - b.order,
                   );
+                  const displayAliases = getElementDisplayAliases(sortedElements);
                   return (
                     <SortablePageItem
                       key={page.id}
@@ -388,6 +533,8 @@ export function NavMain({
                       onAliasChange={(nextAlias) =>
                         handlePageAliasChange(page.id, nextAlias)
                       }
+                      onAddElement={(type) => addElementToPage(page.id, type)}
+                      onDeletePage={() => removePage(page.id)}
                       showDelete={page.order > 1}
                     >
                       {openPages[page.id] && (
@@ -406,12 +553,26 @@ export function NavMain({
                                   key={element.id}
                                   pageId={page.id}
                                   element={element}
+                                  displayAlias={
+                                    displayAliases.get(element.id) ??
+                                    element.alias ??
+                                    "Untitled Field"
+                                  }
+                                  isSelected={selectedElementId === element.id}
+                                  onSelect={() => {
+                                    setCurrentPageId(page.id);
+                                    setSelectedElementId(element.id);
+                                    setRightPanelTab("properties");
+                                  }}
                                   onAliasChange={(nextAlias) =>
                                     handleElementAliasChange(
                                       page.id,
                                       element.id,
                                       nextAlias,
                                     )
+                                  }
+                                  onDelete={() =>
+                                    removeElementFromPage(page.id, element.id)
                                   }
                                 />
                               ))}

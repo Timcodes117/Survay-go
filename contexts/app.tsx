@@ -1,6 +1,11 @@
 import React from "react"
 import { create } from "zustand"
-import { validateAndNormalizeForm, type FormPage, type ValidationIssue } from "@/lib/types"
+import {
+    validateAndNormalizeForm,
+    type FormField,
+    type FormPage,
+    type ValidationIssue,
+} from "@/lib/types"
 
 interface AppState {
     zoom: number
@@ -9,6 +14,8 @@ interface AppState {
     formPages: FormPage[]
     currentPageId?: string | null
     cursorMode: 'pan' | 'select'
+    selectedElementId: string | null
+    rightPanelTab: 'properties' | 'ai'
     validationErrors: ValidationIssue[]
     validationWarnings: ValidationIssue[]
 }
@@ -20,6 +27,13 @@ interface AppActions {
     setFormPages: (updater: React.SetStateAction<FormPage[]>) => void
     setCurrentPageId: (pageId: string | null) => void
     setCursorMode: (mode: 'pan' | 'select') => void
+    setSelectedElementId: (elementId: string | null) => void
+    setRightPanelTab: (tab: 'properties' | 'ai') => void
+    updateElementById: (
+        pageId: string,
+        elementId: string,
+        updater: (element: FormField) => FormField
+    ) => void
     clearValidationIssues: () => void
 }
 
@@ -33,24 +47,15 @@ const initialPages: FormPage[] = [
         elements: [
             {
                 id: "el-1",
-                type: "heading",
-                alias: "Heading",
+                type: "headingDescriptionGroup",
+                alias: "Heading + Description",
                 order: 1,
-                title: "Form Title",
-                description: "Main heading for the form",
-                label: "Untitled Form",
-                visible: true,
-                level: 2
-            },
-            {
-                id: "el-2",
-                type: "description",
-                alias: "Description",
-                order: 2,
-                title: "Form Description",
-                description: "Brief description of what this form is for",
+                title: "Hero Header Group",
+                description: "Grouped heading and description block",
+                heading: "Untitled Form",
                 text: "Please fill out this form to help us understand your preferences.",
-                visible: true
+                visible: true,
+                gapY: 8
             },
             {
                 id: "el-3",
@@ -268,6 +273,8 @@ export const useApp = create<AppStore>()((set) => ({
     formPages: initialFormPages,
     currentPageId: initialFormPages[0]?.id ?? null,
     cursorMode: 'select',
+    selectedElementId: null,
+    rightPanelTab: 'ai',
     validationErrors: validatedInitial.errors,
     validationWarnings: validatedInitial.warnings,
     setZoom: (zoom) => set({ zoom }),
@@ -287,6 +294,35 @@ export const useApp = create<AppStore>()((set) => ({
     }),
     setCurrentPageId: (pageId) => set({ currentPageId: pageId }),
     setCursorMode: (mode) => set({ cursorMode: mode }),
+    setSelectedElementId: (elementId) => set({ selectedElementId: elementId }),
+    setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
+    updateElementById: (pageId, elementId, updater) =>
+        set((state) => {
+            const targetPage = state.formPages.find((page) => page.id === pageId)
+            const targetElement = targetPage?.elements.find((element) => element.id === elementId)
+            if (!targetElement) return state
+
+            const nextElement = updater(targetElement)
+            const nextCandidate = state.formPages.map((page) =>
+                page.id === pageId
+                    ? {
+                        ...page,
+                        elements: page.elements.map((element) =>
+                            element.id === elementId ? nextElement : element
+                        ),
+                    }
+                    : page
+            )
+            const result = validateAndNormalizeForm(nextCandidate)
+
+            return {
+                rightPanelTab: 'properties',
+                selectedElementId: elementId,
+                formPages: result.ok ? result.value : state.formPages,
+                validationErrors: result.errors,
+                validationWarnings: result.warnings,
+            }
+        }),
     clearValidationIssues: () => set({ validationErrors: [], validationWarnings: [] })
 }))
 

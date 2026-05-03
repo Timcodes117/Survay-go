@@ -26,6 +26,8 @@ export default function EditorPage() {
     currentPageId,
     setCurrentPageId,
     cursorMode,
+    selectedElementId,
+    setSelectedElementId,
     validationErrors,
     validationWarnings,
     clearValidationIssues,
@@ -133,6 +135,16 @@ export default function EditorPage() {
     };
   }, [formPages, setCurrentPageId]);
 
+  useEffect(() => {
+    if (!selectedElementId) return;
+    const target = document.querySelector(
+      `[data-element-id="${selectedElementId}"]`,
+    ) as HTMLElement | null;
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [selectedElementId]);
+
   const scaledMinHeightPx =
     canvasContentHeight > 0
       ? Math.ceil(canvasContentHeight * currentZoom) + 1
@@ -177,6 +189,7 @@ export default function EditorPage() {
         <div
           ref={scrollAreaRootRef}
           className={`min-h-0 w-full flex-1 ${cursorMode === "pan" ? "cursor-grab active:cursor-grabbing" : ""}`}
+          onClick={() => setSelectedElementId(null)}
           onPointerDown={handlePanPointerDown(cursorMode)}
           onPointerMove={handlePanPointerMove(cursorMode)}
           onPointerUp={handlePanPointerUp}
@@ -242,6 +255,7 @@ export default function EditorPage() {
                       {page.elements.map((element) => (
                         <EditableElementContainer
                           key={element.id}
+                          pageId={page.id}
                           element={element}
                         />
                       ))}
