@@ -12,12 +12,16 @@ interface AppState {
     positionX: number
     positionY: number
     formPages: FormPage[]
+    pastFormPages: FormPage[][]
+    futureFormPages: FormPage[][]
     currentPageId?: string | null
     cursorMode: 'pan' | 'select'
     selectedElementId: string | null
     rightPanelTab: 'properties' | 'ai'
     validationErrors: ValidationIssue[]
     validationWarnings: ValidationIssue[]
+    canUndo: boolean
+    canRedo: boolean
 }
 
 interface AppActions {
@@ -34,6 +38,8 @@ interface AppActions {
         elementId: string,
         updater: (element: FormField) => FormField
     ) => void
+    undo: () => void
+    redo: () => void
     clearValidationIssues: () => void
 }
 
@@ -265,18 +271,23 @@ const initialPages: FormPage[] = [
 
 const validatedInitial = validateAndNormalizeForm(initialPages)
 const initialFormPages = validatedInitial.value
+const HISTORY_LIMIT = 50
 
 export const useApp = create<AppStore>()((set) => ({
     zoom: 1.0,
     positionX: 0,
     positionY: 0,
     formPages: initialFormPages,
+    pastFormPages: [],
+    futureFormPages: [],
     currentPageId: initialFormPages[0]?.id ?? null,
     cursorMode: 'select',
     selectedElementId: null,
     rightPanelTab: 'ai',
     validationErrors: validatedInitial.errors,
     validationWarnings: validatedInitial.warnings,
+    canUndo: false,
+    canRedo: false,
     setZoom: (zoom) => set({ zoom }),
     setPosition: (x, y) => set({ positionX: x, positionY: y }),
     resetZoom: () => set({ zoom: 1.0, positionX: 0, positionY: 0 }),
@@ -286,10 +297,36 @@ export const useApp = create<AppStore>()((set) => ({
                 ? (updater as (prev: FormPage[]) => FormPage[])(state.formPages)
                 : updater
         const result = validateAndNormalizeForm(nextCandidate)
+
+        if (!result.ok) {
+            return {
+                validationErrors: result.errors,
+                validationWarnings: result.warnings,
+            }
+        }
+
+        if (result.value === state.formPages) {
+            return {
+                formPages: state.formPages,
+                validationErrors: result.errors,
+                validationWarnings: result.warnings,
+            }
+        }
+
+        const nextPast = [...state.pastFormPages, state.formPages]
+        const boundedPast =
+            nextPast.length > HISTORY_LIMIT
+                ? nextPast.slice(nextPast.length - HISTORY_LIMIT)
+                : nextPast
+
         return {
-            formPages: result.ok ? result.value : state.formPages,
+            formPages: result.value,
+            pastFormPages: boundedPast,
+            futureFormPages: [],
             validationErrors: result.errors,
             validationWarnings: result.warnings,
+            canUndo: boundedPast.length > 0,
+            canRedo: false,
         }
     }),
     setCurrentPageId: (pageId) => set({ currentPageId: pageId }),
@@ -315,12 +352,70 @@ export const useApp = create<AppStore>()((set) => ({
             )
             const result = validateAndNormalizeForm(nextCandidate)
 
+            if (!result.ok) {
+                return {
+                    validationErrors: result.errors,
+                    validationWarnings: result.warnings,
+                }
+            }
+
+            const nextPast = [...state.pastFormPages, state.formPages]
+            const boundedPast =
+                nextPast.length > HISTORY_LIMIT
+                    ? nextPast.slice(nextPast.length - HISTORY_LIMIT)
+                    : nextPast
+
             return {
                 rightPanelTab: 'properties',
                 selectedElementId: elementId,
-                formPages: result.ok ? result.value : state.formPages,
+                formPages: result.value,
+                pastFormPages: boundedPast,
+                futureFormPages: [],
                 validationErrors: result.errors,
                 validationWarnings: result.warnings,
+                canUndo: boundedPast.length > 0,
+                canRedo: false,
+            }
+        }),
+    undo: () =>
+        set((state) => {
+            if (state.pastFormPages.length === 0) return state
+
+            const previousFormPages = state.pastFormPages[state.pastFormPages.length - 1]
+            const nextPast = state.pastFormPages.slice(0, -1)
+            const nextFuture = [state.formPages, ...state.futureFormPages]
+            const result = validateAndNormalizeForm(previousFormPages)
+
+            return {
+                formPages: result.ok ? result.value : previousFormPages,
+                pastFormPages: nextPast,
+                futureFormPages: nextFuture,
+                validationErrors: result.errors,
+                validationWarnings: result.warnings,
+                canUndo: nextPast.length > 0,
+                canRedo: nextFuture.length > 0,
+            }
+        }),
+    redo: () =>
+        set((state) => {
+            if (state.futureFormPages.length === 0) return state
+
+            const [nextFormPages, ...remainingFuture] = state.futureFormPages
+            const nextPast = [...state.pastFormPages, state.formPages]
+            const boundedPast =
+                nextPast.length > HISTORY_LIMIT
+                    ? nextPast.slice(nextPast.length - HISTORY_LIMIT)
+                    : nextPast
+            const result = validateAndNormalizeForm(nextFormPages)
+
+            return {
+                formPages: result.ok ? result.value : nextFormPages,
+                pastFormPages: boundedPast,
+                futureFormPages: remainingFuture,
+                validationErrors: result.errors,
+                validationWarnings: result.warnings,
+                canUndo: boundedPast.length > 0,
+                canRedo: remainingFuture.length > 0,
             }
         }),
     clearValidationIssues: () => set({ validationErrors: [], validationWarnings: [] })

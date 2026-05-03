@@ -37,6 +37,8 @@ function RightRail() {
 }
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { undo, redo, canUndo, canRedo } = useApp();
+
   return (
     <SidebarProvider className="h-svh overflow-hidden">
       <AppProvider>
@@ -54,11 +56,23 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center gap-2 px-4">
               <div className="flex items-center gap-2 px-4">
-                <Button variant={"ghost"} className="rounded-full min-h-4  ">
+                <Button
+                  variant={"ghost"}
+                  className="rounded-full min-h-4"
+                  onClick={undo}
+                  disabled={!canUndo}
+                  aria-label="Undo"
+                >
                   <Undo2 size={14} />
                 </Button>
 
-                <Button variant={"ghost"} className="rounded-full min-h-4  ">
+                <Button
+                  variant={"ghost"}
+                  className="rounded-full min-h-4"
+                  onClick={redo}
+                  disabled={!canRedo}
+                  aria-label="Redo"
+                >
                   <Redo2 size={14} />
                 </Button>
               </div>
