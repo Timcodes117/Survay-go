@@ -367,11 +367,13 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
         return (
           <div className="space-y-2">
             {element.mediaType === 'image' && element.url && (
-              <img 
-                src={element.url} 
-                alt={element.label || 'Media'} 
-                className="max-w-full h-auto rounded-lg"
-              />
+              <div className={element.imageWidth === "fixed" ? "w-[320px]" : "w-full"}>
+                <img
+                  src={element.url}
+                  alt={element.label || 'Media'}
+                  className={`h-[240px] w-full rounded-lg ${element.imageFit === "contain" ? "object-contain bg-muted/20" : "object-cover"}`}
+                />
+              </div>
             )}
             {element.mediaType === 'video' && element.url && (
               <video 

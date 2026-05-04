@@ -189,11 +189,15 @@ const normalizeField = (
       return { ...base, type }
     case "media": {
       const mediaType = fieldRecord.mediaType === "video" ? "video" : "image"
+      const imageFit = fieldRecord.imageFit === "contain" ? "contain" : "cover"
+      const imageWidth = fieldRecord.imageWidth === "fixed" ? "fixed" : "full"
       return {
         ...base,
         type,
         mediaType,
         url: typeof fieldRecord.url === "string" ? fieldRecord.url : undefined,
+        imageFit,
+        imageWidth,
       }
     }
     case "address":

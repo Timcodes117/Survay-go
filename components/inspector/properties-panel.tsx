@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -32,6 +32,7 @@ const PLACEHOLDER_TYPES = new Set([
 ]);
 const URL_TYPES = new Set(["media", "url"]);
 const ACCEPT_TYPES = new Set(["file", "image"]);
+const MEDIA_TYPES = new Set(["media"]);
 const GROUPED_HEADING_TYPES = new Set(["headingDescriptionGroup"]);
 const HEADING_TYPES = new Set(["heading"]);
 const DESCRIPTION_TYPES = new Set(["description"]);
@@ -99,6 +100,7 @@ function DraftInput({
   id,
   type = "text",
   min,
+  placeholder,
 }: {
   value: string | number;
   onCommit: (next: string) => void;
@@ -106,6 +108,7 @@ function DraftInput({
   id?: string;
   type?: string;
   min?: number;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState(String(value ?? ""));
 
@@ -122,6 +125,7 @@ function DraftInput({
       id={id}
       type={type}
       min={min}
+      placeholder={placeholder}
       className={className}
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
@@ -145,11 +149,13 @@ function DraftTextarea({
   onCommit,
   className,
   id,
+  placeholder,
 }: {
   value: string;
   onCommit: (next: string) => void;
   className?: string;
   id?: string;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState(value ?? "");
 
@@ -164,6 +170,7 @@ function DraftTextarea({
   return (
     <Textarea
       id={id}
+      placeholder={placeholder}
       className={className}
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
@@ -187,6 +194,7 @@ function SortableOptionRow({
   value,
   disableRemove,
   inputClassName,
+  inputPlaceholder,
   onChange,
   onRemove,
 }: {
@@ -194,6 +202,7 @@ function SortableOptionRow({
   value: string;
   disableRemove: boolean;
   inputClassName: string;
+  inputPlaceholder?: string;
   onChange: (next: string) => void;
   onRemove: () => void;
 }) {
@@ -224,6 +233,7 @@ function SortableOptionRow({
       <DraftInput
         className={inputClassName}
         value={value}
+        placeholder={inputPlaceholder}
         onCommit={onChange}
       />
       <button
@@ -264,11 +274,17 @@ export default function PropertiesPanel() {
     updateElementById(selected.pageId, selected.element.id, updater);
   };
   const optionIdsRef = useRef<string[]>([]);
+  const propertiesScrollViewportRef = useRef<HTMLDivElement | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
     }),
   );
+
+  useLayoutEffect(() => {
+    if (!selectedElementId) return;
+    propertiesScrollViewportRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [selectedElementId]);
 
   if (!selected) {
     return (
@@ -319,7 +335,7 @@ export default function PropertiesPanel() {
   const optionIds = optionIdsRef.current;
 
   return (
-    <ScrollArea className="h-full w-full">
+    <ScrollArea className="h-full w-full" viewportRef={propertiesScrollViewportRef}>
       <div className="space-y-4 p-3 px-8">
         <header className="pb-2 sticky top-0 bg-background z-10 border-b">
           <p className="text-sm font-semibold">{element.alias || "Untitled element"}</p>
@@ -334,6 +350,7 @@ export default function PropertiesPanel() {
             <DraftInput
               id="field-title"
               className={inputClassName}
+              placeholder="e.g. Section title"
               value={element.title ?? ""}
               onCommit={(nextValue) =>
                 updateSelected((current) => ({
@@ -347,6 +364,7 @@ export default function PropertiesPanel() {
             <DraftTextarea
               id="field-description"
               className={textAreaClassName}
+              placeholder="Optional helper text"
               value={element.description ?? ""}
               onCommit={(nextValue) =>
                 updateSelected((current) => ({
@@ -362,6 +380,7 @@ export default function PropertiesPanel() {
                 <DraftInput
                   id="field-group-heading"
                   className={inputClassName}
+                  placeholder="Main heading"
                   value={"heading" in element ? element.heading ?? "" : ""}
                   onCommit={(nextValue) =>
                     updateSelected((current) => ({
@@ -375,6 +394,7 @@ export default function PropertiesPanel() {
                 <DraftTextarea
                   id="field-group-text"
                   className={textAreaClassName}
+                  placeholder="Supporting paragraph"
                   value={"text" in element ? element.text ?? "" : ""}
                   onCommit={(nextValue) =>
                     updateSelected((current) => ({
@@ -391,6 +411,7 @@ export default function PropertiesPanel() {
               <DraftInput
                 id="field-heading-text"
                 className={inputClassName}
+                placeholder="Heading text"
                 value={"label" in element ? element.label ?? "" : ""}
                 onCommit={(nextValue) =>
                   updateSelected((current) => ({
@@ -406,6 +427,7 @@ export default function PropertiesPanel() {
               <DraftTextarea
                 id="field-description-text"
                 className={textAreaClassName}
+                placeholder="Description text"
                 value={"text" in element ? element.text ?? "" : ""}
                 onCommit={(nextValue) =>
                   updateSelected((current) => ({
@@ -426,6 +448,7 @@ export default function PropertiesPanel() {
                 <DraftInput
                   id="field-group-gap"
                   className={inputClassName}
+                  placeholder="e.g. 8"
                   type="number"
                   min={0}
                   value={"gapY" in element ? element.gapY ?? 8 : 8}
@@ -448,6 +471,7 @@ export default function PropertiesPanel() {
               <DraftInput
                 id="field-label"
                 className={inputClassName}
+                placeholder="Question or label"
                 value={element.label ?? ""}
                 onCommit={(nextValue) =>
                   updateSelected((current) => ({
@@ -467,6 +491,7 @@ export default function PropertiesPanel() {
               <DraftInput
                 id="field-placeholder"
                 className={inputClassName}
+                placeholder="Hint inside the field"
                 value={element.placeholder ?? ""}
                 onCommit={(nextValue) =>
                   updateSelected((current) => ({
@@ -511,6 +536,7 @@ export default function PropertiesPanel() {
                       value={option}
                       disableRemove={currentOptions.length <= 1}
                       inputClassName={inputClassName}
+                      inputPlaceholder="Option label"
                       onChange={(nextValue) => {
                         const nextOptions = [...currentOptions];
                         nextOptions[index] = nextValue;
@@ -574,7 +600,7 @@ export default function PropertiesPanel() {
                 }}
               >
                 <SelectTrigger className={inputClassName}>
-                  <SelectValue placeholder="Select accepted type" />
+                  <SelectValue placeholder="File types" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All (.pdf, .doc, .docx)</SelectItem>
@@ -594,6 +620,7 @@ export default function PropertiesPanel() {
               <DraftInput
                 id="field-max-size"
                 className={inputClassName}
+                placeholder="e.g. 10"
                 type="number"
                 min={1}
                 value={element.maxSizeMB ?? ""}
@@ -614,6 +641,7 @@ export default function PropertiesPanel() {
             <CompactField label="Source URL">
               <DraftInput
                 className={inputClassName}
+                placeholder="https://example.com/..."
                 value={"url" in element ? element.url ?? "" : ""}
                 onCommit={(nextValue) =>
                   updateSelected((current) => ({
@@ -626,6 +654,53 @@ export default function PropertiesPanel() {
           </FieldBlock>
         ) : null}
         {URL_TYPES.has(element.type) ? <div className="h-px w-full bg-border/70" /> : null}
+
+        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
+          <FieldBlock title="Image Size">
+            <CompactField label="Fit">
+              <Select
+                value={"imageFit" in element ? element.imageFit ?? "cover" : "cover"}
+                onValueChange={(value) =>
+                  updateSelected((current) => ({
+                    ...current,
+                    imageFit: value === "contain" ? "contain" : "cover",
+                  }))
+                }
+              >
+                <SelectTrigger className={inputClassName}>
+                  <SelectValue placeholder="Fit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cover">Cover</SelectItem>
+                  <SelectItem value="contain">Contain</SelectItem>
+                </SelectContent>
+              </Select>
+            </CompactField>
+
+            <CompactField label="Width">
+              <Select
+                value={"imageWidth" in element ? element.imageWidth ?? "full" : "full"}
+                onValueChange={(value) =>
+                  updateSelected((current) => ({
+                    ...current,
+                    imageWidth: value === "fixed" ? "fixed" : "full",
+                  }))
+                }
+              >
+                <SelectTrigger className={inputClassName}>
+                  <SelectValue placeholder="Width" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full width</SelectItem>
+                  <SelectItem value="fixed">Fixed</SelectItem>
+                </SelectContent>
+              </Select>
+            </CompactField>
+          </FieldBlock>
+        ) : null}
+        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
+          <div className="h-px w-full bg-border/70" />
+        ) : null}
 
         <FieldBlock title="Visibility & Validation">
           <label className="flex items-center justify-between py-2 text-sm">

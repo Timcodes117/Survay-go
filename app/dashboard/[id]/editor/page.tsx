@@ -242,7 +242,7 @@ export default function EditorPage() {
                         pageRefs.current[page.id] = el;
                       }}
                       data-page-id={page.id}
-                      className="space-y-6 w-full max-w-[595px] min-h-[842px] mb-10 bg-background border-[0.5px] mx-auto p-8 shadow-2xl relative"
+                      className="relative mx-auto mb-10 w-[595px] max-w-[595px] min-h-[842px] space-y-6 border-[0.5px] bg-background p-8 shadow-2xl"
                     >
                       <div className="px-3 py-1 bg-gray-400/20 absolute -top-8 left-0 rounded-md w-fit text-xs text-muted-foreground flex flex-row items-center gap-1">
                         <File className="size-3" />
@@ -259,6 +259,11 @@ export default function EditorPage() {
                           element={element}
                         />
                       ))}
+                      {page.elements.length === 0 && (
+                        <div className="flex min-h-[680px] items-center justify-center rounded-lg border border-dashed border-border/70 text-sm text-muted-foreground">
+                          Empty page. Add elements from the sidebar or toolbar.
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

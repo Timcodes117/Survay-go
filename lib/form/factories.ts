@@ -50,68 +50,72 @@ const titleFromType: Record<AddableFieldType, string> = {
 
 export function createField(type: AddableFieldType, order: number): FormField {
   const id = makeId("el")
-  const base = {
+  const common = {
     id,
-    type,
     alias: titleFromType[type],
     order,
     title: titleFromType[type],
     description: "",
-    visible: true,
-  } as const
+    visible: true as const,
+  }
 
   switch (type) {
     case "headingDescriptionGroup":
       return {
-        ...base,
+        ...common,
+        type: "headingDescriptionGroup",
         heading: "Untitled Form",
         text: "Add a short description for this section.",
         gapY: 8,
       }
     case "heading":
-      return { ...base, label: "Untitled Heading", level: 2 }
+      return { ...common, type: "heading", label: "Untitled Heading", level: 2 }
     case "description":
-      return { ...base, text: "Add description here." }
+      return { ...common, type: "description", text: "Add description here." }
     case "divider":
+      return { ...common, type: "divider" }
     case "pageBreak":
-      return { ...base }
+      return { ...common, type: "pageBreak" }
     case "media":
       return {
-        ...base,
+        ...common,
+        type: "media",
         label: "Media",
         mediaType: "image",
         url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+        imageFit: "cover",
+        imageWidth: "full",
       }
     case "text":
-      return { ...base, label: "Short answer", placeholder: "Type your answer", required: false }
+      return { ...common, type: "text", label: "Short answer", placeholder: "Type your answer", required: false }
     case "textarea":
-      return { ...base, label: "Long answer", placeholder: "Type your response", required: false }
+      return { ...common, type: "textarea", label: "Long answer", placeholder: "Type your response", required: false }
     case "number":
-      return { ...base, label: "Number", placeholder: "0", min: 0, max: 100, required: false }
+      return { ...common, type: "number", label: "Number", placeholder: "0", min: 0, max: 100, required: false }
     case "email":
-      return { ...base, label: "Email", placeholder: "name@example.com", required: false }
+      return { ...common, type: "email", label: "Email", placeholder: "name@example.com", required: false }
     case "phone":
-      return { ...base, label: "Phone", placeholder: "Enter phone number", required: false }
+      return { ...common, type: "phone", label: "Phone", placeholder: "Enter phone number", required: false }
     case "radio":
-      return { ...base, label: "Choose one", options: ["Option 1"], required: false }
+      return { ...common, type: "radio", label: "Choose one", options: ["Option 1"], required: false }
     case "checkbox":
-      return { ...base, label: "Choose any", options: ["Option 1"], required: false }
+      return { ...common, type: "checkbox", label: "Choose any", options: ["Option 1"], required: false }
     case "select":
-      return { ...base, label: "Select option", options: ["Option 1"], required: false }
+      return { ...common, type: "select", label: "Select option", options: ["Option 1"], required: false }
     case "file":
-      return { ...base, label: "Upload file", accept: [".pdf", ".doc", ".docx"], maxSizeMB: 5 }
+      return { ...common, type: "file", label: "Upload file", accept: [".pdf", ".doc", ".docx"], maxSizeMB: 5 }
     case "image":
-      return { ...base, label: "Upload image", accept: ["image/jpeg", "image/png"], maxSizeMB: 2 }
+      return { ...common, type: "image", label: "Upload image", accept: ["image/jpeg", "image/png"], maxSizeMB: 2 }
     case "date":
-      return { ...base, label: "Date" }
+      return { ...common, type: "date", label: "Date" }
     case "time":
-      return { ...base, label: "Time" }
+      return { ...common, type: "time", label: "Time" }
     case "address":
-      return { ...base, label: "Address", placeholder: "Enter address" }
+      return { ...common, type: "address", label: "Address", placeholder: "Enter address" }
     case "url":
-      return { ...base, label: "Website", placeholder: "https://example.com" }
+      return { ...common, type: "url", label: "Website", placeholder: "https://example.com" }
     default:
-      return { ...base, label: "Field" } as FormField
+      return { ...common, type: "text", label: "Field", placeholder: "Type your answer", required: false }
   }
 }
 

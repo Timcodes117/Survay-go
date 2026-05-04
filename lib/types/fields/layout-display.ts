@@ -25,6 +25,8 @@ export interface MediaField extends BaseField {
   type: "media"
   url?: string
   mediaType: "image" | "video"
+  imageFit?: "cover" | "contain"
+  imageWidth?: "full" | "fixed"
 }
 
 export interface PageBreakField extends BaseField {
