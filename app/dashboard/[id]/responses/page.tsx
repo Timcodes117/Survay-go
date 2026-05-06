@@ -83,7 +83,7 @@ export default function ResponsesPage() {
             ))}
           </div>
 
-          <div className="rounded-xl border bg-card p-5 space-y-4">
+          <div className="rounded-xl  p-5 space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <h3 className="text-base font-medium">Response Trend</h3>

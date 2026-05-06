@@ -4,6 +4,7 @@ export type AddableFieldType =
   | "headingDescriptionGroup"
   | "heading"
   | "description"
+  | "markdown"
   | "divider"
   | "media"
   | "pageBreak"
@@ -29,6 +30,7 @@ const titleFromType: Record<AddableFieldType, string> = {
   headingDescriptionGroup: "Heading + Description",
   heading: "Heading",
   description: "Description",
+  markdown: "Rich Text (Markdown)",
   divider: "Divider",
   media: "Media",
   pageBreak: "Page Break",
@@ -72,6 +74,12 @@ export function createField(type: AddableFieldType, order: number): FormField {
       return { ...common, type: "heading", label: "Untitled Heading", level: 2 }
     case "description":
       return { ...common, type: "description", text: "Add description here." }
+    case "markdown":
+      return {
+        ...common,
+        type: "markdown",
+        content: "## Section title\n\nUse **Markdown** to format instructions, links, and lists.",
+      }
     case "divider":
       return { ...common, type: "divider" }
     case "pageBreak":

@@ -36,6 +36,7 @@ const MEDIA_TYPES = new Set(["media"]);
 const GROUPED_HEADING_TYPES = new Set(["headingDescriptionGroup"]);
 const HEADING_TYPES = new Set(["heading"]);
 const DESCRIPTION_TYPES = new Set(["description"]);
+const MARKDOWN_TYPES = new Set(["markdown"]);
 const REQUIRED_ACCEPT_TYPES = [".pdf", ".doc", ".docx"] as const;
 
 const getAcceptPreset = (accept?: string[]) => {
@@ -433,6 +434,22 @@ export default function PropertiesPanel() {
                   updateSelected((current) => ({
                     ...current,
                     text: nextValue,
+                  }))
+                }
+              />
+            </CompactField>
+          ) : null}
+          {MARKDOWN_TYPES.has(element.type) ? (
+            <CompactField id="field-markdown-content" label="Markdown content">
+              <DraftTextarea
+                id="field-markdown-content"
+                className={textAreaClassName}
+                placeholder="Write markdown content (headings, links, lists...)"
+                value={"content" in element ? element.content ?? "" : ""}
+                onCommit={(nextValue) =>
+                  updateSelected((current) => ({
+                    ...current,
+                    content: nextValue,
                   }))
                 }
               />

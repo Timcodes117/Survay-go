@@ -4,8 +4,15 @@ const Page = () => {
   return (
     <div className="w-full max-w-md">
       <div className="rounded-2xl  p-8">
+      <img
+          src="/survay-go.svg"
+          alt="Auth page visual"
+          height={100}
+          width={100}
+          className="object-contain object-bottom mx-auto "
+        />
         <div className="mb-6 space-y-1 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-black">Welcome back</h1>
           <p className="text-sm text-muted-foreground">
             Continue with your Google account or email.
           </p>
@@ -14,7 +21,7 @@ const Page = () => {
         <div className="space-y-4">
           <button
             type="button"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium transition hover:bg-accent"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-black font-medium transition hover:bg-accent"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
               <path
@@ -27,10 +34,10 @@ const Page = () => {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+              <span className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
+              <span className=" px-2 text-muted-foreground bg-white">or</span>
             </div>
           </div>
 
@@ -42,15 +49,16 @@ const Page = () => {
               id="email"
               type="email"
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-lg border   text-black border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
-            <button
+            
+          </form>
+          <button
               type="submit"
               className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               Continue with email
             </button>
-          </form>
         </div>
       </div>
     </div>

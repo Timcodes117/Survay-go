@@ -41,7 +41,7 @@ const EditableElementContainer = ({ pageId, element, children, onChange }: Edita
   }
 
   // For layout/display elements, render them directly without container styling
-  if (['heading', 'description', 'headingDescriptionGroup', 'divider', 'media', 'pageBreak'].includes(element.type)) {
+  if (['heading', 'description', 'markdown', 'headingDescriptionGroup', 'divider', 'media', 'pageBreak'].includes(element.type)) {
     return (
       <div
         data-focusable-element="true"

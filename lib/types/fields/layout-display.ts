@@ -10,6 +10,11 @@ export interface DescriptionField extends BaseField {
   text: string
 }
 
+export interface MarkdownField extends BaseField {
+  type: "markdown"
+  content: string
+}
+
 export interface HeadingDescriptionGroupField extends BaseField {
   type: "headingDescriptionGroup"
   heading: string

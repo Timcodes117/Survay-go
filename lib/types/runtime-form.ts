@@ -31,6 +31,7 @@ const FIELD_TYPES = new Set([
   "signature",
   "heading",
   "description",
+  "markdown",
   "headingDescriptionGroup",
   "divider",
   "media",
@@ -175,6 +176,12 @@ const normalizeField = (
         ...base,
         type,
         text: toStringWithDefault(fieldRecord.text, ""),
+      }
+    case "markdown":
+      return {
+        ...base,
+        type,
+        content: toStringWithDefault(fieldRecord.content, ""),
       }
     case "headingDescriptionGroup":
       return {

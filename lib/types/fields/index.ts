@@ -22,6 +22,7 @@ import type {
 import type {
   HeadingField,
   DescriptionField,
+  MarkdownField,
   HeadingDescriptionGroupField,
   DividerField,
   MediaField,
@@ -52,6 +53,7 @@ export type FileAndMediaField =
 export type LayoutDisplayField =
   | HeadingField
   | DescriptionField
+  | MarkdownField
   | HeadingDescriptionGroupField
   | DividerField
   | MediaField

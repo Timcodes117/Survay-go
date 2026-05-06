@@ -1,4 +1,6 @@
 import React from 'react'
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -347,6 +349,15 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
             {element.text || 'No description provided'}
           </p>
         )
+      
+      case "markdown":
+        return (
+          <div className="text-sm leading-6 text-foreground [&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_h1]:text-2xl [&_h1]:font-semibold [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:text-lg [&_h3]:font-semibold [&_li]:ml-4 [&_ol]:list-decimal [&_p]:text-muted-foreground [&_ul]:list-disc">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {element.content || "No content provided"}
+            </ReactMarkdown>
+          </div>
+        )
 
       case 'headingDescriptionGroup':
         return (
@@ -424,6 +435,7 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
         return renderFileMediaInput()
       case "heading":
       case "description":
+      case "markdown":
       case "headingDescriptionGroup":
       case "divider":
       case "media":
