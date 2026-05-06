@@ -32,6 +32,7 @@ const FloatingToolBar = () => {
     const { addElementToCurrentPage } = useFormBuilderActions();
     const [activePanel, setActivePanel] = useState<"search" | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [addElementQuery, setAddElementQuery] = useState("");
     const searchInputRef = useRef<HTMLInputElement>(null);
     const pathname = usePathname();
     const router = useRouter();
@@ -93,6 +94,20 @@ const FloatingToolBar = () => {
             .filter((entry) => entry.searchParts.includes(query))
             .slice(0, 50);
     }, [searchQuery, searchableElements]);
+
+    const filteredElementGroups = useMemo(() => {
+        const query = addElementQuery.trim().toLowerCase();
+        if (!query) return ELEMENT_GROUPS;
+
+        return ELEMENT_GROUPS
+            .map((group) => ({
+                ...group,
+                items: group.items.filter((item) =>
+                    item.label.toLowerCase().includes(query),
+                ),
+            }))
+            .filter((group) => group.items.length > 0);
+    }, [addElementQuery]);
 
     useEffect(() => {
         if (activePanel !== "search") return;
@@ -176,7 +191,7 @@ const FloatingToolBar = () => {
                         <TooltipContent side="top">Hand / Grab (H)</TooltipContent>
                     </Tooltip>
 
-                    <DropdownMenu>
+                    <DropdownMenu onOpenChange={(open) => !open && setAddElementQuery("")}>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <DropdownMenuTrigger asChild>
@@ -188,8 +203,16 @@ const FloatingToolBar = () => {
                             <TooltipContent side="top">Add element</TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent side="top" align="center" className="min-w-[340px] w-[340px] p-2">
+                            <div className="px-1 pb-2">
+                                <Input
+                                    value={addElementQuery}
+                                    onChange={(event) => setAddElementQuery(event.target.value)}
+                                    placeholder="Search elements..."
+                                    aria-label="Search add element list"
+                                />
+                            </div>
                             <ScrollArea className="h-[300px]">
-                                {ELEMENT_GROUPS.map((group, idx) => (
+                                {filteredElementGroups.length > 0 ? filteredElementGroups.map((group, idx) => (
                                     <React.Fragment key={group.label}>
                                         <DropdownMenuGroup>
                                             <DropdownMenuLabel className="text-xs text-muted-foreground">{group.label}</DropdownMenuLabel>
@@ -206,9 +229,13 @@ const FloatingToolBar = () => {
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuGroup>
-                                        {idx < ELEMENT_GROUPS.length - 1 && <DropdownMenuSeparator />}
+                                        {idx < filteredElementGroups.length - 1 && <DropdownMenuSeparator />}
                                     </React.Fragment>
-                                ))}
+                                )) : (
+                                    <p className="px-2 py-3 text-sm text-muted-foreground">
+                                        No elements found for "{addElementQuery}".
+                                    </p>
+                                )}
                             </ScrollArea>
                         </DropdownMenuContent>
                     </DropdownMenu>

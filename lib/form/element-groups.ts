@@ -10,7 +10,7 @@ export const ELEMENT_GROUPS: {
       { label: "Heading + Description", value: "headingDescriptionGroup" },
       { label: "Heading", value: "heading" },
       { label: "Description", value: "description" },
-      { label: "Rich Text (Markdown)", value: "markdown" },
+      { label: "Markdown", value: "markdown" },
       { label: "Divider", value: "divider" },
       { label: "Media", value: "media" },
       { label: "Page Break", value: "pageBreak" },

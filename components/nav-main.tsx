@@ -162,6 +162,7 @@ function SortablePageItem({
   showDelete: boolean;
   children?: React.ReactNode;
 }) {
+  const [addElementQuery, setAddElementQuery] = useState("");
   const { active, over } = useDndContext();
   const {
     attributes,
@@ -184,6 +185,19 @@ function SortablePageItem({
     (active?.rect.current.translated?.top ?? over.rect.top) +
       (active?.rect.current.translated?.height ?? over.rect.height) / 2 >
       over.rect.top + over.rect.height / 2;
+  const filteredElementGroups = React.useMemo(() => {
+    const query = addElementQuery.trim().toLowerCase();
+    if (!query) return ELEMENT_GROUPS;
+
+    return ELEMENT_GROUPS
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          item.label.toLowerCase().includes(query),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [addElementQuery]);
 
   return (
     <SidebarMenuItem className="relative">
@@ -241,7 +255,7 @@ function SortablePageItem({
             onCommit={onAliasChange}
           />
         </SidebarMenuButton>
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={(open) => !open && setAddElementQuery("")}>
           <DropdownMenuTrigger asChild>
             <Button
               variant={"ghost"}
@@ -253,8 +267,16 @@ function SortablePageItem({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start" className="min-w-[280px] p-2">
+            <div className="px-1 pb-2">
+              <Input
+                value={addElementQuery}
+                onChange={(event) => setAddElementQuery(event.target.value)}
+                placeholder="Search elements..."
+                aria-label="Search add element list"
+              />
+            </div>
             <ScrollArea className="h-[260px]">
-              {ELEMENT_GROUPS.map((group, idx) => (
+              {filteredElementGroups.length > 0 ? filteredElementGroups.map((group, idx) => (
                 <React.Fragment key={group.label}>
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="text-xs text-muted-foreground">
@@ -273,9 +295,13 @@ function SortablePageItem({
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuGroup>
-                  {idx < ELEMENT_GROUPS.length - 1 && <DropdownMenuSeparator />}
+                  {idx < filteredElementGroups.length - 1 && <DropdownMenuSeparator />}
                 </React.Fragment>
-              ))}
+              )) : (
+                <p className="px-2 py-3 text-sm text-muted-foreground">
+                  No elements found for "{addElementQuery}".
+                </p>
+              )}
             </ScrollArea>
           </DropdownMenuContent>
         </DropdownMenu>

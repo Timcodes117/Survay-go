@@ -30,7 +30,7 @@ const titleFromType: Record<AddableFieldType, string> = {
   headingDescriptionGroup: "Heading + Description",
   heading: "Heading",
   description: "Description",
-  markdown: "Rich Text (Markdown)",
+  markdown: "Markdown",
   divider: "Divider",
   media: "Media",
   pageBreak: "Page Break",
