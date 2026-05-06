@@ -1,6 +1,6 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormPage } from "@/lib/types";
 
 type SetFormPages = (
@@ -21,7 +21,8 @@ export function useNavMainState(
     setOpenPages((prev) => {
       const next: Record<string, boolean> = {};
       for (const page of sortedPages) {
-        next[page.id] = prev[page.id] ?? true;
+        const prior = prev[page.id];
+        next[page.id] = prior === undefined ? true : prior;
       }
       return next;
     });
@@ -33,6 +34,14 @@ export function useNavMainState(
       [pageId]: !prev[pageId],
     }));
   };
+
+  /** Open one accordion without changing other pages (chevron / user collapse stays intact). */
+  const expandPage = useCallback((pageId: string) => {
+    setOpenPages((prev) => {
+      if (prev[pageId]) return prev;
+      return { ...prev, [pageId]: true };
+    });
+  }, []);
 
   const handlePageAliasChange = (pageId: string, newAlias: string) => {
     setFormPages((prevPages) =>
@@ -131,6 +140,7 @@ export function useNavMainState(
     sortedPages,
     openPages,
     togglePage,
+    expandPage,
     handlePageAliasChange,
     handleElementAliasChange,
     handlePageDragEnd,

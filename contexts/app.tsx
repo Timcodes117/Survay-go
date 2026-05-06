@@ -15,6 +15,10 @@ interface AppState {
     pastFormPages: FormPage[][]
     futureFormPages: FormPage[][]
     currentPageId?: string | null
+    /** When set, editor scrolls this page into view then clears via `consumeCanvasScrollTarget`. */
+    canvasScrollTargetPageId: string | null
+    /** Incremented on explicit page focus so the sidebar can sync without reacting to scroll-driven `currentPageId` updates. */
+    pageFocusGeneration: number
     cursorMode: 'pan' | 'select'
     selectedElementId: string | null
     rightPanelTab: 'properties' | 'ai'
@@ -30,6 +34,9 @@ interface AppActions {
     resetZoom: () => void
     setFormPages: (updater: React.SetStateAction<FormPage[]>) => void
     setCurrentPageId: (pageId: string | null) => void
+    /** Select page, clear element selection, scroll canvas + sidebar (no frame highlight on the page sheet). */
+    focusFormPageInEditor: (pageId: string) => void
+    consumeCanvasScrollTarget: () => void
     setCursorMode: (mode: 'pan' | 'select') => void
     setSelectedElementId: (elementId: string | null) => void
     setRightPanelTab: (tab: 'properties' | 'ai') => void
@@ -281,6 +288,8 @@ export const useApp = create<AppStore>()((set) => ({
     pastFormPages: [],
     futureFormPages: [],
     currentPageId: initialFormPages[0]?.id ?? null,
+    canvasScrollTargetPageId: null,
+    pageFocusGeneration: 0,
     cursorMode: 'select',
     selectedElementId: null,
     rightPanelTab: 'ai',
@@ -330,6 +339,14 @@ export const useApp = create<AppStore>()((set) => ({
         }
     }),
     setCurrentPageId: (pageId) => set({ currentPageId: pageId }),
+    focusFormPageInEditor: (pageId) =>
+        set((state) => ({
+            currentPageId: pageId,
+            selectedElementId: null,
+            canvasScrollTargetPageId: pageId,
+            pageFocusGeneration: state.pageFocusGeneration + 1,
+        })),
+    consumeCanvasScrollTarget: () => set({ canvasScrollTargetPageId: null }),
     setCursorMode: (mode) => set({ cursorMode: mode }),
     setSelectedElementId: (elementId) => set({ selectedElementId: elementId }),
     setRightPanelTab: (tab) => set({ rightPanelTab: tab }),

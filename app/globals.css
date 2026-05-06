@@ -117,6 +117,11 @@
   src: url(/fonts/TurretRoad-Regular.ttf);
 }
 
+@font-face {
+  font-family: Megrim;
+  src: url(/fonts/Megrim-Regular.ttf);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

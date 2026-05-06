@@ -11,18 +11,28 @@ export function useFormBuilderActions() {
     setCurrentPageId,
     setSelectedElementId,
     setRightPanelTab,
+    focusFormPageInEditor,
   } = useApp()
 
   const addPage = useCallback(() => {
     const nextPage = createPage(formPages.length + 1)
     setFormPages((prevPages) => [...prevPages, nextPage])
-    setCurrentPageId(nextPage.id)
+    focusFormPageInEditor(nextPage.id)
     return nextPage.id
-  }, [formPages.length, setCurrentPageId, setFormPages])
+  }, [focusFormPageInEditor, formPages.length, setFormPages])
 
   const removePage = useCallback(
     (pageId: string) => {
       if (formPages.length <= 1) return
+
+      const removedPage = formPages.find((page) => page.id === pageId)
+      const selectionOnRemovedPage = removedPage?.elements.some(
+        (element) => element.id === selectedElementId,
+      )
+
+      if (selectionOnRemovedPage) {
+        setSelectedElementId(null)
+      }
 
       const nextPages = formPages
         .filter((page) => page.id !== pageId)
@@ -31,10 +41,23 @@ export function useFormBuilderActions() {
       setFormPages(nextPages)
 
       if (currentPageId === pageId) {
-        setCurrentPageId(nextPages[0]?.id ?? null)
+        const nextId = nextPages[0]?.id ?? null
+        if (nextId) {
+          focusFormPageInEditor(nextId)
+        } else {
+          setCurrentPageId(null)
+        }
       }
     },
-    [currentPageId, formPages, setCurrentPageId, setFormPages],
+    [
+      currentPageId,
+      focusFormPageInEditor,
+      formPages,
+      selectedElementId,
+      setCurrentPageId,
+      setFormPages,
+      setSelectedElementId,
+    ],
   )
 
   const addElementToPage = useCallback(

@@ -28,6 +28,8 @@ export default function EditorPage() {
     cursorMode,
     selectedElementId,
     setSelectedElementId,
+    canvasScrollTargetPageId,
+    consumeCanvasScrollTarget,
     validationErrors,
     validationWarnings,
     clearValidationIssues,
@@ -145,6 +147,21 @@ export default function EditorPage() {
     target.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [selectedElementId]);
 
+  useEffect(() => {
+    if (!canvasScrollTargetPageId) return;
+    const pageId = canvasScrollTargetPageId;
+    const timeoutId = window.setTimeout(() => {
+      const node = document.querySelector(
+        `[data-page-id="${pageId}"]`,
+      ) as HTMLElement | null;
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      consumeCanvasScrollTarget();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [canvasScrollTargetPageId, consumeCanvasScrollTarget]);
+
   const scaledMinHeightPx =
     canvasContentHeight > 0
       ? Math.ceil(canvasContentHeight * currentZoom) + 1
@@ -242,7 +259,7 @@ export default function EditorPage() {
                         pageRefs.current[page.id] = el;
                       }}
                       data-page-id={page.id}
-                      className="relative mx-auto mb-10 w-[595px] max-w-[595px] min-h-[842px] space-y-6 border-[0.5px] bg-background p-8 shadow-2xl"
+                      className="relative mx-auto mb-10 w-[595px] max-w-[595px] min-h-[842px] scroll-mt-20 space-y-6 border-[0.5px] bg-background p-8 shadow-2xl"
                     >
                       <div className="px-3 py-1 bg-gray-400/20 absolute -top-8 left-0 rounded-md w-fit text-xs text-muted-foreground flex flex-row items-center gap-1">
                         <File className="size-3" />

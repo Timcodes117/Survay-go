@@ -340,7 +340,7 @@ export default function PropertiesPanel() {
         <header className="pb-2 sticky top-0 bg-background z-10 border-b">
           <p className="text-sm font-semibold">{element.alias || "Untitled element"}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {element.type} · {element.id}
+            {element.type} · #{element.order}
           </p>
         </header>
         {/* <div className="h-px w-full bg-border/70" /> */}

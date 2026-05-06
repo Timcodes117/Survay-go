@@ -38,7 +38,7 @@ export default function SettingsPage() {
             <p className="text-sm text-muted-foreground">Configure webhook delivery and form submission behavior.</p>
           </div>
 
-          <Collapsible className="p-6 border rounded-lg">
+          <Collapsible className="my-2 ">
             <CollapsibleTrigger asChild>
               <Button
                 type="button"
@@ -67,8 +67,8 @@ export default function SettingsPage() {
               </Button>
             </CollapsibleTrigger>
 
-            <CollapsibleContent className="space-y-5 pt-4">
-              <Alert className="py-2">
+            <CollapsibleContent className="space-y-5 px-6 pt-10">
+              {/* <Alert className="py-2">
                 {webhookUrl ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                 <AlertTitle>{webhookUrl ? "Endpoint configured" : "Add your endpoint URL"}</AlertTitle>
                 <AlertDescription>
@@ -76,7 +76,7 @@ export default function SettingsPage() {
                     ? "Responses will be delivered as JSON payloads to your API."
                     : "Configure a webhook URL to enable automated response forwarding."}
                 </AlertDescription>
-              </Alert>
+              </Alert> */}
 
               <div className="space-y-2">
                 <Label htmlFor="webhook-url">Webhook Endpoint URL</Label>

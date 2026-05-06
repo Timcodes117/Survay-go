@@ -47,7 +47,7 @@ const EditableElementContainer = ({ pageId, element, children, onChange }: Edita
         data-focusable-element="true"
         data-element-id={element.id}
         onClick={handleSelect}
-        className={`w-full h-fit rounded-md transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
+        className={`scroll-mt-20 w-full h-fit rounded-md transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
       >
         <FormElementRenderer element={element} disabled />
       </div>
@@ -60,7 +60,7 @@ const EditableElementContainer = ({ pageId, element, children, onChange }: Edita
       data-focusable-element="true"
       data-element-id={element.id}
       onClick={handleSelect}
-      className={`w-full h-fit rounded-lg border border-dotted p-6 flex flex-col transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
+      className={`scroll-mt-20 w-full h-fit rounded-lg border border-dotted p-6 flex flex-col transition-colors ${isSelected ? "ring-2 ring-primary/60 bg-primary/5" : "hover:bg-muted/20"}`}
     >
       <EditableWrapper>
           {/* {element.required && <span className="text-destructive ml-1">*</span>} */}

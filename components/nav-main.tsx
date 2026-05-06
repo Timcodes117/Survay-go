@@ -18,8 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { IconTrash } from "@tabler/icons-react";
 import { ChevronRight, GripVertical, Plus, Shapes } from "lucide-react";
-import * as React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +42,7 @@ import {
 import { useApp } from "@/contexts/app";
 import { useFormBuilderActions } from "@/hooks/use-form-builder-actions";
 import { useNavMainState } from "@/hooks/use-nav-main-state";
+import { useTransientFlash } from "@/hooks/use-transient-flash";
 import { ELEMENT_GROUPS } from "@/lib/form/element-groups";
 import { ELEMENT_ICON_BY_TYPE } from "@/lib/form/element-icons";
 import type { AddableFieldType } from "@/lib/form/factories";
@@ -141,7 +141,9 @@ function SortablePageItem({
   page,
   pageIndex,
   isOpen,
-  onToggleOpen,
+  showSidebarFlash,
+  onPageRowActivate,
+  onChevronToggle,
   onAliasChange,
   onAddElement,
   onDeletePage,
@@ -151,7 +153,9 @@ function SortablePageItem({
   page: FormPage;
   pageIndex: number;
   isOpen: boolean;
-  onToggleOpen: () => void;
+  showSidebarFlash: boolean;
+  onPageRowActivate: () => void;
+  onChevronToggle: () => void;
   onAliasChange: (nextAlias: string) => void;
   onAddElement: (type: AddableFieldType) => void;
   onDeletePage: () => void;
@@ -185,11 +189,13 @@ function SortablePageItem({
     <SidebarMenuItem className="relative">
       <div
         ref={setNodeRef}
+        data-sidebar-page-id={page.id}
         style={{ transform: CSS.Transform.toString(transform), transition }}
         className={cn(
-          "relative group flex items-center justify-between gap-1 pr-2 min-w-0 overflow-hidden rounded-md",
+          "relative group flex scroll-mt-3 items-center justify-between gap-1 pr-2 min-w-0 overflow-hidden rounded-md",
           isDragging && "opacity-50",
           isDropTarget && isPageDrag && "bg-primary/10",
+          showSidebarFlash && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
         {isDropTarget && isPageDrag && !isOverMidpoint && (
@@ -200,7 +206,8 @@ function SortablePageItem({
         )}
         <SidebarMenuButton
           className="min-w-0 flex-1"
-          onClick={onToggleOpen}
+          type="button"
+          onClick={onPageRowActivate}
           data-state={isOpen ? "open" : "closed"}
         >
           <button
@@ -213,14 +220,24 @@ function SortablePageItem({
           >
             <GripVertical size={14} />
           </button>
-          <ChevronRight
-            className={`transition-transform duration-200 ${isOpen ? "rotate-90" : "rotate-0"}`}
-          />
+          <span
+            role="presentation"
+            className="inline-flex shrink-0 cursor-pointer items-center rounded-sm p-0.5 text-muted-foreground hover:bg-muted/80"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChevronToggle();
+            }}
+          >
+            <ChevronRight
+              className={`size-4 transition-transform duration-200 ${isOpen ? "rotate-90" : "rotate-0"}`}
+            />
+          </span>
           <InlineEditableText
             className="w-full truncate text-xs !bg-transparent !border-none !ring-0 focus:!bg-muted-foreground/5 rounded-xl px-2"
             displayClassName="block w-full truncate text-xs px-2 rounded-xl"
             value={page.alias}
             fallbackValue={`Page ${pageIndex + 1}`}
+            onFocusTarget={onPageRowActivate}
             onCommit={onAliasChange}
           />
         </SidebarMenuButton>
@@ -285,7 +302,7 @@ function SortableElementItem({
   pageId,
   element,
   displayAlias,
-  isSelected,
+  isSidebarSelected,
   onSelect,
   onAliasChange,
   onDelete,
@@ -293,7 +310,7 @@ function SortableElementItem({
   pageId: string;
   element: FormField;
   displayAlias: string;
-  isSelected: boolean;
+  isSidebarSelected: boolean;
   onSelect: () => void;
   onAliasChange: (nextAlias: string) => void;
   onDelete: () => void;
@@ -327,10 +344,10 @@ function SortableElementItem({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "relative w-full min-w-0 rounded-md",
+        "relative w-full min-w-0 scroll-mt-3 rounded-md",
         isDragging && "opacity-50",
         isDropTarget && isElementDrag && "bg-primary/10",
-        isSelected && "bg-primary/10 ring-1 ring-primary/40",
+        isSidebarSelected && "bg-primary/10 ring-1 ring-primary/40",
       )}
     >
       {isDropTarget && isElementDrag && !isOverMidpoint && (
@@ -405,6 +422,9 @@ export function NavMain({
     setSelectedElementId,
     setRightPanelTab,
     setCurrentPageId,
+    currentPageId,
+    pageFocusGeneration,
+    focusFormPageInEditor,
   } = useApp();
   const { addPage, removePage, addElementToPage, removeElementFromPage } =
     useFormBuilderActions();
@@ -412,11 +432,14 @@ export function NavMain({
     sortedPages,
     openPages,
     togglePage,
+    expandPage,
     handlePageAliasChange,
     handleElementAliasChange,
     handlePageDragEnd,
     handleElementDragEnd,
   } = useNavMainState(formPages, setFormPages);
+  const { targets: sidebarFlash, pulse: flashSidebar } = useTransientFlash(720);
+  const lastProcessedPageFocusGen = useRef(0);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -458,19 +481,36 @@ export function NavMain({
     );
     if (!ownerPage) return;
 
-    if (!openPages[ownerPage.id]) {
-      togglePage(ownerPage.id);
-      return;
-    }
+    expandPage(ownerPage.id);
 
-    requestAnimationFrame(() => {
+    const timeoutId = window.setTimeout(() => {
       const target = document.querySelector(
         `[data-sidebar-element-id="${selectedElementId}"]`,
       ) as HTMLElement | null;
-      if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    });
-  }, [selectedElementId, sortedPages, openPages, togglePage]);
+      target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [selectedElementId, expandPage]);
+
+  useEffect(() => {
+    if (pageFocusGeneration === 0) return;
+    if (pageFocusGeneration === lastProcessedPageFocusGen.current) return;
+    lastProcessedPageFocusGen.current = pageFocusGeneration;
+
+    const pageId = currentPageId;
+    if (!pageId) return;
+
+    expandPage(pageId);
+    flashSidebar({ pageId });
+
+    const timeoutId = window.setTimeout(() => {
+      const target = document.querySelector(
+        `[data-sidebar-page-id="${pageId}"]`,
+      ) as HTMLElement | null;
+      target?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [pageFocusGeneration, currentPageId, expandPage, flashSidebar]);
 
   return (
     <SidebarGroup>
@@ -529,7 +569,11 @@ export function NavMain({
                       page={page}
                       pageIndex={pageIndex}
                       isOpen={!!openPages[page.id]}
-                      onToggleOpen={() => togglePage(page.id)}
+                      showSidebarFlash={sidebarFlash.pageId === page.id}
+                      onPageRowActivate={() => {
+                        focusFormPageInEditor(page.id);
+                      }}
+                      onChevronToggle={() => togglePage(page.id)}
                       onAliasChange={(nextAlias) =>
                         handlePageAliasChange(page.id, nextAlias)
                       }
@@ -558,7 +602,9 @@ export function NavMain({
                                     element.alias ??
                                     "Untitled Field"
                                   }
-                                  isSelected={selectedElementId === element.id}
+                                  isSidebarSelected={
+                                    selectedElementId === element.id
+                                  }
                                   onSelect={() => {
                                     setCurrentPageId(page.id);
                                     setSelectedElementId(element.id);
