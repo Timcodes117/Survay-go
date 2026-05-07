@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { IconCirclePlus2 } from "@tabler/icons-react";
-import { ChevronsUpDown, HandIcon, MessageCircle, MousePointer2, Search } from "lucide-react";
+import { ArrowUp, Check, ChevronsUpDown, Copy, HandIcon, MessageCircle, MousePointer2, Search } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
     SheetTitle,
 } from "../ui/sheet";
 import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useApp } from "@/contexts/app";
 import { useFormBuilderActions } from "@/hooks/use-form-builder-actions";
@@ -41,6 +42,9 @@ const FloatingToolBar = () => {
     const [activePanel, setActivePanel] = useState<"search" | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [addElementQuery, setAddElementQuery] = useState("");
+    const [inviteEmail, setInviteEmail] = useState("");
+    const [showInviteForm, setShowInviteForm] = useState(false);
+    const [copied, setCopied] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const pathname = usePathname();
     const router = useRouter();
@@ -170,6 +174,28 @@ const FloatingToolBar = () => {
         setActivePanel(null);
     };
 
+    const previewUrl = useMemo(() => {
+        if (typeof window === "undefined" || !formId) return "";
+        return `${window.location.origin}/forms/${formId}`;
+    }, [formId]);
+
+    const handleCopyPreviewLink = async () => {
+        if (!previewUrl) return;
+        try {
+            await navigator.clipboard.writeText(previewUrl);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1200);
+        } catch {
+            setCopied(false);
+        }
+    };
+
+    const handleInvite = () => {
+        if (!inviteEmail.trim()) return;
+        setInviteEmail("");
+        setShowInviteForm(false);
+    };
+
     return (
         <Sheet open={activePanel !== null} onOpenChange={(open) => !open && setActivePanel(null)}>
             <div className="flex items-center justify-center absolute bottom-10 px-1 left-1/2 -translate-x-1/2 bg-background text-foreground w-fit h-[50px] rounded-xl shadow-md border-[0.5px] z-50">
@@ -287,15 +313,61 @@ const FloatingToolBar = () => {
 
                     <div className="h-8 w-px bg-sidebar-border" />
 
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant={"default"} size={"icon"} className="w-[100px] h-[40px] text-white rounded-lg">
-                                Share
-                                <ChevronsUpDown size={14} />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">Share</TooltipContent>
-                    </Tooltip>
+                    <Popover>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <PopoverTrigger asChild>
+                                    <Button variant={"default"} size={"icon"} className="w-[100px] h-[40px] text-white rounded-lg">
+                                        Share
+                                        <ChevronsUpDown size={14} />
+                                    </Button>
+                                </PopoverTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Share</TooltipContent>
+                        </Tooltip>
+                        <PopoverContent side="top" align="center" className="w-[260px] rounded-2xl p-0 border shadow-md overflow-hidden">
+                            <div className="divide-y">
+                                <button
+                                    type="button"
+                                    className="w-full px-4 py-3 text-sm text-left hover:bg-muted/50 transition-colors flex items-center justify-between"
+                                    onClick={handleCopyPreviewLink}
+                                    disabled={!previewUrl}
+                                >
+                                    <span>Copy link</span>
+                                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="w-full px-4 py-3 text-sm text-left hover:bg-muted/50 transition-colors"
+                                    onClick={() => setShowInviteForm((prev) => !prev)}
+                                >
+                                    Invite
+                                </button>
+                            </div>
+                            {showInviteForm ? (
+                                <div className="border-t px-3 py-3">
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="email"
+                                            value={inviteEmail}
+                                            onChange={(event) => setInviteEmail(event.target.value)}
+                                            placeholder="Email address"
+                                            aria-label="Invite email address"
+                                        />
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            aria-label="Send invite"
+                                            onClick={handleInvite}
+                                            disabled={!inviteEmail.trim()}
+                                        >
+                                            <ArrowUp className="size-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : null}
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 
