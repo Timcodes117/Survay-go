@@ -28,7 +28,15 @@ import { ELEMENT_ICON_BY_TYPE } from "@/lib/form/element-icons";
 import { usePathname, useRouter } from "next/navigation";
 
 const FloatingToolBar = () => {
-    const { cursorMode, setCursorMode, formPages, setCurrentPageId, setSelectedElementId } = useApp();
+    const {
+        cursorMode,
+        setCursorMode,
+        formPages,
+        setCurrentPageId,
+        setSelectedElementId,
+        commentPlacementActive,
+        setCommentPlacementActive,
+    } = useApp();
     const { addElementToCurrentPage } = useFormBuilderActions();
     const [activePanel, setActivePanel] = useState<"search" | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -139,12 +147,17 @@ const FloatingToolBar = () => {
             if (key === "h") {
                 event.preventDefault();
                 setCursorMode("pan");
+                return;
+            }
+            if (key === "escape" && commentPlacementActive) {
+                event.preventDefault();
+                setCommentPlacementActive(false);
             }
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [setCursorMode]);
+    }, [setCursorMode, commentPlacementActive, setCommentPlacementActive]);
 
     const handlePickSearchResult = (pageId: string, elementId: string) => {
         setCurrentPageId(pageId);
@@ -243,15 +256,18 @@ const FloatingToolBar = () => {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
-                                variant={"ghost"}
+                                type="button"
+                                variant={commentPlacementActive ? "secondary" : "ghost"}
                                 size={"icon"}
                                 className="w-[50px] h-[40px]"
-                                aria-label="Comments"
+                                aria-label="Comment mode"
+                                aria-pressed={commentPlacementActive}
+                                onClick={() => setCommentPlacementActive(!commentPlacementActive)}
                             >
                                 <MessageCircle className="!size-5" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="top">Comments (coming soon)</TooltipContent>
+                        <TooltipContent side="top">Comment mode (Esc)</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>

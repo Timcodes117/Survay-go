@@ -33,6 +33,9 @@ export default function EditorPage() {
     validationErrors,
     validationWarnings,
     clearValidationIssues,
+    commentPlacementActive,
+    setCommentTargetElementId,
+    setCommentPopoverElementId,
   } = useApp();
   const {
     MIN_ZOOM,
@@ -206,7 +209,13 @@ export default function EditorPage() {
         <div
           ref={scrollAreaRootRef}
           className={`min-h-0 w-full flex-1 ${cursorMode === "pan" ? "cursor-grab active:cursor-grabbing" : ""}`}
-          onClick={() => setSelectedElementId(null)}
+          onClick={() => {
+            setSelectedElementId(null);
+            if (commentPlacementActive) {
+              setCommentTargetElementId(null);
+              setCommentPopoverElementId(null);
+            }
+          }}
           onPointerDown={handlePanPointerDown(cursorMode)}
           onPointerMove={handlePanPointerMove(cursorMode)}
           onPointerUp={handlePanPointerUp}
@@ -259,7 +268,7 @@ export default function EditorPage() {
                         pageRefs.current[page.id] = el;
                       }}
                       data-page-id={page.id}
-                      className="relative mx-auto mb-10 w-[595px] max-w-[595px] min-h-[842px] scroll-mt-20 space-y-6 border-[0.5px] bg-background p-8 shadow-2xl"
+                      className="relative mx-auto mb-10 w-[595px] max-w-[595px] min-h-[842px] scroll-mt-20 space-y-6 overflow-visible border-[0.5px] bg-background p-8 shadow-2xl"
                     >
                       <div className="px-3 py-1 bg-gray-400/20 absolute -top-8 left-0 rounded-md w-fit text-xs text-muted-foreground flex flex-row items-center gap-1">
                         <File className="size-3" />

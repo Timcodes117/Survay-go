@@ -6,6 +6,10 @@ import {
     type FormPage,
     type ValidationIssue,
 } from "@/lib/types"
+import {
+    createElementComment,
+    type ElementComment,
+} from "@/lib/types/element-comment"
 
 interface AppState {
     zoom: number
@@ -26,6 +30,14 @@ interface AppState {
     validationWarnings: ValidationIssue[]
     canUndo: boolean
     canRedo: boolean
+    /** When true, clicking an element sets comment target instead of opening the inspector. */
+    commentPlacementActive: boolean
+    /** Element the user picked while comment mode is on (shows comment anchor). */
+    commentTargetElementId: string | null
+    /** Which element's comment dropdown is open (if any). */
+    commentPopoverElementId: string | null
+    /** Collaboration metadata: comments keyed by element id (not part of form schema / undo). */
+    elementCommentsByElementId: Record<string, ElementComment[]>
 }
 
 interface AppActions {
@@ -48,6 +60,11 @@ interface AppActions {
     undo: () => void
     redo: () => void
     clearValidationIssues: () => void
+    setCommentPlacementActive: (active: boolean) => void
+    setCommentTargetElementId: (elementId: string | null) => void
+    setCommentPopoverElementId: (elementId: string | null) => void
+    addElementComment: (elementId: string, text: string) => void
+    removeElementComment: (elementId: string, commentId: string) => void
 }
 
 type AppStore = AppState & AppActions
@@ -297,6 +314,10 @@ export const useApp = create<AppStore>()((set) => ({
     validationWarnings: validatedInitial.warnings,
     canUndo: false,
     canRedo: false,
+    commentPlacementActive: false,
+    commentTargetElementId: null,
+    commentPopoverElementId: null,
+    elementCommentsByElementId: {},
     setZoom: (zoom) => set({ zoom }),
     setPosition: (x, y) => set({ positionX: x, positionY: y }),
     resetZoom: () => set({ zoom: 1.0, positionX: 0, positionY: 0 }),
@@ -435,7 +456,48 @@ export const useApp = create<AppStore>()((set) => ({
                 canRedo: remainingFuture.length > 0,
             }
         }),
-    clearValidationIssues: () => set({ validationErrors: [], validationWarnings: [] })
+    clearValidationIssues: () => set({ validationErrors: [], validationWarnings: [] }),
+    setCommentPlacementActive: (active) =>
+        set(() => ({
+            commentPlacementActive: active,
+            ...(!active
+                ? {
+                      commentTargetElementId: null,
+                      commentPopoverElementId: null,
+                  }
+                : {}),
+        })),
+    setCommentTargetElementId: (elementId) =>
+        set({ commentTargetElementId: elementId }),
+    setCommentPopoverElementId: (elementId) =>
+        set({ commentPopoverElementId: elementId }),
+    addElementComment: (elementId, text) =>
+        set((state) => {
+            const comment = createElementComment(text)
+            if (!comment.text) return state
+            const prev = state.elementCommentsByElementId[elementId] ?? []
+            return {
+                elementCommentsByElementId: {
+                    ...state.elementCommentsByElementId,
+                    [elementId]: [...prev, comment],
+                },
+            }
+        }),
+    removeElementComment: (elementId, commentId) =>
+        set((state) => {
+            const prev = state.elementCommentsByElementId[elementId] ?? []
+            const next = prev.filter((comment) => comment.id !== commentId)
+            if (next.length === prev.length) return state
+            const nextMap = { ...state.elementCommentsByElementId }
+            if (next.length === 0) {
+                delete nextMap[elementId]
+            } else {
+                nextMap[elementId] = next
+            }
+            return {
+                elementCommentsByElementId: nextMap,
+            }
+        }),
 }))
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
