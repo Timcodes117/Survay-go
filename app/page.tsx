@@ -16,7 +16,8 @@ const page = () => {
     <main>
       <br />
       <header className='flex items-center justify-between w-full max-w-7xl mx-auto mt-5'>
-        <img src="/survay-go.svg" alt="logo" height={50} width={50} />
+      {isDarkMode ? <img src="/logo-white.svg" alt="logo" className='  ' width={200} /> : <img src="/logo.svg" alt="logo" className='  ' width={200} />}
+
 
         <nav>
           <ul className='flex items-center gap-6'>
