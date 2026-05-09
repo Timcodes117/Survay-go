@@ -1,4 +1,5 @@
 import React from "react"
+import Link from "next/link"
 
 const Page = () => {
   return (
@@ -59,6 +60,16 @@ const Page = () => {
             >
               Continue with email
             </button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/signup"
+              className="font-medium text-black underline underline-offset-2 hover:opacity-80"
+            >
+              Sign up
+            </Link>
+          </p>
         </div>
       </div>
     </div>

@@ -382,7 +382,11 @@ const FormElementRenderer: React.FC<FormElementRendererProps> = ({
                 <img
                   src={element.url}
                   alt={element.label || 'Media'}
-                  className={`h-[240px] w-full rounded-lg ${element.imageFit === "contain" ? "object-contain bg-muted/20" : "object-cover"}`}
+                  className={`w-full ${element.imageFit === "contain" ? "object-contain bg-muted/20" : "object-cover"}`}
+                  style={{
+                    height: element.imageHeightPx ?? 240,
+                    borderRadius: element.imageBorderRadiusPx ?? 8,
+                  }}
                 />
               </div>
             )}

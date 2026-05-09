@@ -198,6 +198,12 @@ const normalizeField = (
       const mediaType = fieldRecord.mediaType === "video" ? "video" : "image"
       const imageFit = fieldRecord.imageFit === "contain" ? "contain" : "cover"
       const imageWidth = fieldRecord.imageWidth === "fixed" ? "fixed" : "full"
+      const rawHeight = toNumberOrUndefined(fieldRecord.imageHeightPx)
+      const rawRadius = toNumberOrUndefined(fieldRecord.imageBorderRadiusPx)
+      const imageHeightPx =
+        rawHeight !== undefined && rawHeight >= 1 ? rawHeight : undefined
+      const imageBorderRadiusPx =
+        rawRadius !== undefined && rawRadius >= 0 ? rawRadius : undefined
       return {
         ...base,
         type,
@@ -205,6 +211,8 @@ const normalizeField = (
         url: typeof fieldRecord.url === "string" ? fieldRecord.url : undefined,
         imageFit,
         imageWidth,
+        imageHeightPx,
+        imageBorderRadiusPx,
       }
     }
     case "address":

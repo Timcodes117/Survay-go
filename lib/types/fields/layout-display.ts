@@ -32,6 +32,10 @@ export interface MediaField extends BaseField {
   mediaType: "image" | "video"
   imageFit?: "cover" | "contain"
   imageWidth?: "full" | "fixed"
+  /** Display height in px; defaults to 240 when unset. */
+  imageHeightPx?: number
+  /** Border radius in px; defaults to 8 when unset. */
+  imageBorderRadiusPx?: number
 }
 
 export interface PageBreakField extends BaseField {

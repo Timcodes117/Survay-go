@@ -33,6 +33,8 @@ const PLACEHOLDER_TYPES = new Set([
 const URL_TYPES = new Set(["media", "url"]);
 const ACCEPT_TYPES = new Set(["file", "image"]);
 const MEDIA_TYPES = new Set(["media"]);
+const DEFAULT_MEDIA_IMAGE_HEIGHT_PX = 240;
+const DEFAULT_MEDIA_IMAGE_BORDER_RADIUS_PX = 8;
 const GROUPED_HEADING_TYPES = new Set(["headingDescriptionGroup"]);
 const HEADING_TYPES = new Set(["heading"]);
 const DESCRIPTION_TYPES = new Set(["description"]);
@@ -112,9 +114,12 @@ function DraftInput({
   placeholder?: string;
 }) {
   const [draft, setDraft] = useState(String(value ?? ""));
+  const focusedRef = useRef(false);
 
   useEffect(() => {
-    setDraft(String(value ?? ""));
+    if (!focusedRef.current) {
+      setDraft(String(value ?? ""));
+    }
   }, [value]);
 
   const commit = () => {
@@ -130,11 +135,17 @@ function DraftInput({
       className={className}
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
-      onBlur={commit}
+      onFocus={() => {
+        focusedRef.current = true;
+      }}
+      onBlur={() => {
+        commit();
+        focusedRef.current = false;
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
-          commit();
+          (e.target as HTMLInputElement).blur();
         }
         if (e.key === "Escape") {
           e.preventDefault();
@@ -458,6 +469,101 @@ export default function PropertiesPanel() {
         </FieldBlock>
         <div className="h-px w-full bg-border/70" />
 
+        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
+          <FieldBlock title="Image Size">
+            <div className="grid grid-cols-2 gap-3">
+              <CompactField label="Fit">
+                <Select
+                  value={"imageFit" in element ? element.imageFit ?? "cover" : "cover"}
+                  onValueChange={(value) =>
+                    updateSelected((current) => ({
+                      ...current,
+                      imageFit: value === "contain" ? "contain" : "cover",
+                    }))
+                  }
+                >
+                  <SelectTrigger className={inputClassName}>
+                    <SelectValue placeholder="Fit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Cover</SelectItem>
+                    <SelectItem value="contain">Contain</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CompactField>
+
+              <CompactField label="Width">
+                <Select
+                  value={"imageWidth" in element ? element.imageWidth ?? "full" : "full"}
+                  onValueChange={(value) =>
+                    updateSelected((current) => ({
+                      ...current,
+                      imageWidth: value === "fixed" ? "fixed" : "full",
+                    }))
+                  }
+                >
+                  <SelectTrigger className={inputClassName}>
+                    <SelectValue placeholder="Width" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">Full width</SelectItem>
+                    <SelectItem value="fixed">Fixed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CompactField>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <CompactField id="field-image-height" label="Height (px)">
+                <DraftInput
+                  id="field-image-height"
+                  className={inputClassName}
+                  type="number"
+                  min={1}
+                  value={
+                    "imageHeightPx" in element && element.imageHeightPx != null
+                      ? element.imageHeightPx
+                      : DEFAULT_MEDIA_IMAGE_HEIGHT_PX
+                  }
+                  onCommit={(nextValue) => {
+                    const n = Number(nextValue)
+                    updateSelected((current) => ({
+                      ...current,
+                      imageHeightPx:
+                        Number.isFinite(n) && n >= 1 ? Math.round(n) : undefined,
+                    }))
+                  }}
+                />
+              </CompactField>
+              <CompactField id="field-image-radius" label="Corner radius (px)">
+                <DraftInput
+                  id="field-image-radius"
+                  className={inputClassName}
+                  type="number"
+                  min={0}
+                  value={
+                    "imageBorderRadiusPx" in element &&
+                    element.imageBorderRadiusPx != null
+                      ? element.imageBorderRadiusPx
+                      : DEFAULT_MEDIA_IMAGE_BORDER_RADIUS_PX
+                  }
+                  onCommit={(nextValue) => {
+                    const n = Number(nextValue)
+                    updateSelected((current) => ({
+                      ...current,
+                      imageBorderRadiusPx:
+                        Number.isFinite(n) && n >= 0 ? Math.round(n) : undefined,
+                    }))
+                  }}
+                />
+              </CompactField>
+            </div>
+          </FieldBlock>
+        ) : null}
+        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
+          <div className="h-px w-full bg-border/70" />
+        ) : null}
+
         {GROUPED_HEADING_TYPES.has(element.type) ? (
           <>
             <FieldBlock title="Layout">
@@ -671,53 +777,6 @@ export default function PropertiesPanel() {
           </FieldBlock>
         ) : null}
         {URL_TYPES.has(element.type) ? <div className="h-px w-full bg-border/70" /> : null}
-
-        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
-          <FieldBlock title="Image Size">
-            <CompactField label="Fit">
-              <Select
-                value={"imageFit" in element ? element.imageFit ?? "cover" : "cover"}
-                onValueChange={(value) =>
-                  updateSelected((current) => ({
-                    ...current,
-                    imageFit: value === "contain" ? "contain" : "cover",
-                  }))
-                }
-              >
-                <SelectTrigger className={inputClassName}>
-                  <SelectValue placeholder="Fit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cover">Cover</SelectItem>
-                  <SelectItem value="contain">Contain</SelectItem>
-                </SelectContent>
-              </Select>
-            </CompactField>
-
-            <CompactField label="Width">
-              <Select
-                value={"imageWidth" in element ? element.imageWidth ?? "full" : "full"}
-                onValueChange={(value) =>
-                  updateSelected((current) => ({
-                    ...current,
-                    imageWidth: value === "fixed" ? "fixed" : "full",
-                  }))
-                }
-              >
-                <SelectTrigger className={inputClassName}>
-                  <SelectValue placeholder="Width" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full">Full width</SelectItem>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                </SelectContent>
-              </Select>
-            </CompactField>
-          </FieldBlock>
-        ) : null}
-        {MEDIA_TYPES.has(element.type) && "mediaType" in element && element.mediaType === "image" ? (
-          <div className="h-px w-full bg-border/70" />
-        ) : null}
 
         <FieldBlock title="Visibility & Validation">
           <label className="flex items-center justify-between py-2 text-sm">
