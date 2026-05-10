@@ -62,7 +62,7 @@ export const landingNavItems = {
     label: "Product",
     /** Shown full-height on the right inside the mega panel */
     panelImage: {
-      src: "/dash2.png",
+      src: "/download.jpg",
       alt: "Tall preview of the Survay Go form builder dashboard and canvas",
     },
     columns: [
