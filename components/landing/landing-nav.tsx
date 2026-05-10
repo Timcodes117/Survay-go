@@ -147,11 +147,11 @@ export function LandingNav({ logoSrc, className }: LandingNavProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70",
+        "w-full z-50 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70",
         className,
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-24 max-w-6xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
@@ -160,9 +160,9 @@ export function LandingNav({ logoSrc, className }: LandingNavProps) {
           <Image
             src={logoSrc}
             alt=""
-            width={132}
-            height={32}
-            className="h-8 w-auto"
+            width={200}
+            height={70}
+            className="h-10 w-auto"
             priority
           />
         </Link>

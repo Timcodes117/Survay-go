@@ -31,8 +31,7 @@ export function LandingHero({ logoSrc, className }: LandingHeroProps) {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-          
-          <br />
+           
           <motion.h1
             id="hero-heading"
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}
@@ -147,7 +146,7 @@ export function LandingHero({ logoSrc, className }: LandingHeroProps) {
                 src="/dash3.png"
                 alt="Dashboard preview showing the visual form editor canvas with fields and toolbar"
                 width={1440}
-                height={900}
+                height={1000}
                 className="h-auto w-full object-cover object-top"
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 priority

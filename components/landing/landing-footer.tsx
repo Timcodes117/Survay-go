@@ -61,7 +61,21 @@ export function LandingFooter({ className }: LandingFooterProps) {
           </nav>
         </div>
 
-        <Image src="/logo.svg" alt="Footer background" width={1000} height={1000} className="w-full h-auto" />
+        <Image
+          src="/logo.svg"
+          alt="Footer background"
+          width={1000}
+          height={1000}
+          className="w-full h-auto block dark:hidden opacity-50"
+        />
+        <Image
+          src="/logo-white.svg"
+          alt="Footer background"
+          width={1000}
+          height={1000}
+          className="w-full h-auto hidden dark:block opacity-50"
+        />
+ 
 
         <div className="mt-12 flex flex-col gap-4 border-t border-border/60 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
